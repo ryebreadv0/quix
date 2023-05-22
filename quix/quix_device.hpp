@@ -7,7 +7,7 @@ class device_impl;
 
 class device {
 public:
-    device(const char* app_name, uint32_t app_version);
+    device(const char* app_name, uint32_t app_version, uint32_t width, uint32_t height);
     ~device();
 
     device(const device&) = delete;
@@ -19,8 +19,7 @@ public:
 
 private:
 
-    std::unique_ptr<device_impl> m_impl;
-
+    std::unique_ptr<device_impl> m_impl; 
 
 
 };

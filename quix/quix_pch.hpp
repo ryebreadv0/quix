@@ -14,6 +14,8 @@
 #include <map>
 #include <set>
 #include <string>
+#include <ranges>
+
 
 #include <cmath>
 

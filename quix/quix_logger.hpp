@@ -38,30 +38,33 @@ public:
         m_logger->sinks().push_back(sink);
     }
 
+
     template <typename... Args>
-    void trace(Args&&... args) {
-        m_logger->trace(std::forward<Args>(args)...);
+    inline void trace(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+        m_logger->trace(fmt, std::forward<Args>(args)...);
     }
     template <typename... Args>
-    void debug(Args&&... args) {
-        m_logger->debug(std::forward<Args>(args)...);
+    inline void debug(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+        m_logger->debug(fmt, std::forward<Args>(args)...);
     }
     template <typename... Args>
-    void info(Args&&... args) {
-        m_logger->info(std::forward<Args>(args)...);
+    inline void info(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+        m_logger->info(fmt, std::forward<Args>(args)...);
     }
     template <typename... Args>
-    void warn(Args&&... args) {
-        m_logger->warn(std::forward<Args>(args)...);
+    inline void warn(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+        m_logger->warn(fmt, std::forward<Args>(args)...);
     }
     template <typename... Args>
-    void error(Args&&... args) {
-        m_logger->error(std::forward<Args>(args)...);
+    inline void error(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+        m_logger->error(fmt, std::forward<Args>(args)...);
     }
     template <typename... Args>
-    void critical(Args&&... args) {
-        m_logger->critical(std::forward<Args>(args)...);
+    inline void critical(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+        m_logger->critical(fmt, std::forward<Args>(args)...);
     }
+
+
 
 private:
     std::shared_ptr<spdlog::logger> m_logger;

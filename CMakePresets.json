@@ -18,6 +18,7 @@
                 "CMAKE_CXX_STANDARD_REQUIRED": "ON",
                 "CMAKE_CXX_EXTENSIONS": "OFF"
             },
+            "environment": {},
             "generator": "Ninja"
         },
         {
@@ -25,7 +26,11 @@
             "hidden": true,
             "description": "Debug configuration",
             "binaryDir": "${sourceDir}/build/debug",
-            "inherits": "Defaults"
+            "inherits": "Defaults",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+            
         },
         {
             "name": "Release",
