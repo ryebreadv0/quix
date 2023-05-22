@@ -4,6 +4,7 @@ out/
 cmake-build-*/
 conan-cache/
 log/
+.cache/
 
 # User spesific settings
 CMakeUserPresets.json

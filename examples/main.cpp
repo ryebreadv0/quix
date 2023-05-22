@@ -5,9 +5,14 @@ static constexpr int HEIGHT = 600;
 
 int main()
 {
-    quix::device device("quix_example", VK_MAKE_VERSION(0, 0, 1), 800, 600);
+    quix::device device("quix_example", 
+        VK_MAKE_VERSION(0, 0, 1), 
+        WIDTH, HEIGHT,
+        {},
+        {}
+    );
     
-    auto window = device.window();
+    auto* window = device.window();
 
     while (glfwWindowShouldClose(window) == GLFW_FALSE)
     {

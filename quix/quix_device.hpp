@@ -7,7 +7,10 @@ class device_impl;
 
 class device {
 public:
-    device(const char* app_name, uint32_t app_version, uint32_t width, uint32_t height);
+    device(const char* app_name, uint32_t app_version, uint32_t width, uint32_t height, 
+        std::vector<const char*>&& requested_extensions,
+        VkPhysicalDeviceFeatures&& requested_features);
+
     ~device();
 
     device(const device&) = delete;
@@ -18,12 +21,8 @@ public:
     NODISCARD GLFWwindow* window() const noexcept;
 
 private:
-
-    std::unique_ptr<device_impl> m_impl; 
-
-
+    std::shared_ptr<device_impl> m_impl;
 };
-
 
 } // namespace quix
 

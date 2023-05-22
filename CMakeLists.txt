@@ -19,17 +19,32 @@ include(cmake/CPM.cmake)
 
 CPMAddPackage("gh:gabime/spdlog@1.11.0")
 CPMAddPackage("gh:glfw/glfw#3.3.7")
+# CPMAddPackage(
+#     NAME VulkanMemoryAllocator
+#     GITHUB_REPOSITORY GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+#     GIT_VERSION 3.1.0
+#     DOWNLOAD_ONLY YES
+# )
 
 find_package(spdlog REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(glfw REQUIRED)
 
+add_library(VulkanMemoryAllocator
+    quix/quix_vma.cpp
+)
+
+target_include_directories(VulkanMemoryAllocator
+    PUBLIC ${Vulkan_INCLUDE_DIRS}
+)
 
 target_link_libraries(${PROJECT_NAME} 
     spdlog::spdlog
     Vulkan::Vulkan
     glfw
+    VulkanMemoryAllocator
 )
+
 target_include_directories(${PROJECT_NAME} 
     PUBLIC ${PROJECT_SOURCE_DIR}/quix
     PUBLIC ${spdlog_SOURCE_DIRS}/include
@@ -50,4 +65,12 @@ target_link_libraries(quix_example
 target_include_directories(quix_example 
     PUBLIC ${PROJECT_SOURCE_DIR}/quix
     PUBLIC ${spdlog_SOURCE_DIRS}/include
+)
+
+# copy compile_commands.json from build dir to ../compile_commands.json
+
+add_custom_command(TARGET quix_example POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_BINARY_DIR}/compile_commands.json
+        ${CMAKE_SOURCE_DIR}/build/compile_commands.json
 )

@@ -5,6 +5,8 @@
 
 #include <GLFW/glfw3native.h>
 
+#include <vma/vk_mem_alloc.h>
+
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -15,6 +17,7 @@
 #include <set>
 #include <string>
 #include <ranges>
+#include <memory>
 
 
 #include <cmath>

@@ -31,7 +31,10 @@ public:
         uint32_t engine_version,
         device* device,
         uint32_t width,
-        uint32_t height);
+        uint32_t height,
+        std::vector<const char*>&& requested_extensions,
+        VkPhysicalDeviceFeatures&& requested_features);
+
     ~device_impl();
 
     device_impl(const device_impl&) = delete;
@@ -58,6 +61,8 @@ private:
     int get_supported_feature_score(VkPhysicalDevice physical_device);
     int rate_physical_device(VkPhysicalDevice physical_device);
     void pick_physical_device();
+    void create_logical_device();
+    void create_allocator();
 
     // instance variables
     GLFWwindow* window;
@@ -69,21 +74,17 @@ private:
     VkSurfaceKHR m_surface = VK_NULL_HANDLE;
     VkDevice m_logical_device = VK_NULL_HANDLE;
 
+    VmaAllocator m_allocator = VK_NULL_HANDLE;
+
     VkQueue m_graphics_queue = VK_NULL_HANDLE;
     VkQueue m_present_queue = VK_NULL_HANDLE;
 
     static constexpr uint32_t vk_api_version = VK_API_VERSION_1_3;
 
-    static constexpr std::array<const char*, 1> requested_extensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
+    std::vector<const char*> requested_extensions;
 
-    std::unique_ptr<VkPhysicalDeviceFeatures> requested_features = 
-    std::make_unique<VkPhysicalDeviceFeatures>(
-        VkPhysicalDeviceFeatures{
-            .samplerAnisotropy = VK_FALSE,            
-        }
-    );
+    VkPhysicalDeviceFeatures requested_features;
+
     std::optional<queue_family_indices> m_queue_family_indices;
 };
 
@@ -93,8 +94,12 @@ device_impl::device_impl(const char* app_name,
     uint32_t engine_version,
     device* device,
     uint32_t width,
-    uint32_t height)
+    uint32_t height,
+    std::vector<const char*>&& requested_extensions,
+    VkPhysicalDeviceFeatures&& requested_features)
     : m_logger("device", spdlog::level::trace)
+    , requested_extensions(std::move(requested_extensions))
+    , requested_features(std::move(requested_features))
 {
     m_logger.add_sink(std::make_shared<spdlog::sinks::basic_file_sink_mt>(
         "logs/device.log", true));
@@ -103,6 +108,10 @@ device_impl::device_impl(const char* app_name,
     m_logger.set_pattern();
 
     m_logger.trace("device_impl class created");
+
+    requested_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+    m_logger.info("requested extensions: {}", requested_extensions.size());
 
     auto result = glfwInit();
     if (result == GLFW_FALSE) {
@@ -118,17 +127,30 @@ device_impl::device_impl(const char* app_name,
 
     pick_physical_device();
 
+    create_logical_device();
+
+    create_allocator();
 }
 
 device_impl::~device_impl()
 {
+    vmaDestroyAllocator(m_allocator);
+    m_logger.trace("VMA allocator destroyed");
+
+    vkDestroyDevice(m_logical_device, nullptr);
+    m_logger.trace("logical device destroyed");
+
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+    m_logger.trace("surface destroyed");
 
     glfwDestroyWindow(window);
+    m_logger.trace("window destroyed");
 
     vkDestroyInstance(m_instance, nullptr);
+    m_logger.trace("instance destroyed");
 
     glfwTerminate();
+    m_logger.trace("GLFW terminated");
 
     m_logger.trace("device_impl class destroyed");
 }
@@ -163,6 +185,7 @@ void device_impl::create_instance(const char* app_name,
     };
 
     if (vkCreateInstance(&create_info, nullptr, &m_instance) != VK_SUCCESS) {
+        m_logger.error("Failed to create instance");
         throw std::runtime_error("failed to create instance!");
     }
 
@@ -179,7 +202,7 @@ void device_impl::create_window(const char* app_name,
     window = glfwCreateWindow(width, height, app_name, nullptr, nullptr);
 
     if (window == nullptr) {
-        m_logger.error("Failed to create GLFW window");
+        m_logger.error("failed to create GLFW window");
         glfwTerminate();
         throw std::runtime_error("failed to create window!");
     }
@@ -190,7 +213,7 @@ void device_impl::create_surface()
 {
     VkResult error;
     if (glfwCreateWindowSurface(m_instance, window, nullptr, &m_surface) != VK_SUCCESS) {
-        // m_logger.error("failed to create window surface: {}", error);
+        m_logger.error("failed to create window surface: {}", error);
         throw std::runtime_error("failed to create window surface!");
     }
     m_logger.trace("surface created");
@@ -234,8 +257,6 @@ device_impl::find_queue_families(VkPhysicalDevice physical_device)
     }
 
     if (indices.is_complete()) {
-        // m_queue_family_indices = indices; // TODO this needs to be set after
-        // the device is selected
         return indices;
     } else {
         throw std::runtime_error("failed to find queue families!");
@@ -313,26 +334,26 @@ bool device_impl::is_physical_device_suitable(VkPhysicalDevice physical_device)
     return indices.is_complete() && extensions_supported && swapchain_adequate;
 }
 
-#define CHECK_VKDEVICE_FEATURE(feature)                                               \
-{                                                                                     \
-    if (supported_features.feature == false && requested_features->feature == true) { \
-        return 0;                                                                     \
-    } else {                                                                          \
-        if (requested_features->feature == true)                                      \
-            features_score += 100;                                                    \
-        else {                                                                        \
-            features_score += 10;                                                     \
-        }                                                                             \
-    }                                                                                 \
-}
+#define CHECK_VKDEVICE_FEATURE(feature)                                                  \
+    {                                                                                    \
+        if (supported_features.feature == false && requested_features.feature == true) { \
+            return 0;                                                                    \
+        } else {                                                                         \
+            if (requested_features.feature == true)                                      \
+                features_score += 100;                                                   \
+            else {                                                                       \
+                features_score += 10;                                                    \
+            }                                                                            \
+        }                                                                                \
+    }
 
 int device_impl::get_supported_feature_score(VkPhysicalDevice physical_device)
 {
     int features_score = 0;
 
-    if (requested_features == nullptr) {
-        return features_score;
-    }
+    // if (requested_features == nullptr) {
+    //     return features_score;
+    // }
 
     VkPhysicalDeviceFeatures supported_features;
     vkGetPhysicalDeviceFeatures(physical_device, &supported_features);
@@ -481,8 +502,16 @@ void device_impl::pick_physical_device()
 
     for (auto& deviceRating : std::ranges::reverse_view(deviceRatings)) {
         if (is_physical_device_suitable(deviceRating.second)) {
+            if (deviceRating.first <= 0) {
+                m_logger.warn("Device has a score of {} which means it does not support requested features", deviceRating.first);
+                continue;
+            }
+
             m_physical_device = deviceRating.second;
             m_queue_family_indices = find_queue_families(m_physical_device);
+
+            m_logger.trace("Using device with score of {}", deviceRating.first);
+
             // maxMsaa = getMaxUsableSampleCount();
             break;
         }
@@ -491,21 +520,81 @@ void device_impl::pick_physical_device()
     if (m_physical_device == VK_NULL_HANDLE) {
         throw std::runtime_error("failed to find a suitable GPU!");
     }
+
+    m_logger.trace("Selected physical device");
 }
+
+void device_impl::create_logical_device()
+{
+    queue_family_indices indices = find_queue_families(m_physical_device);
+
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+    std::set<uint32_t> uniqueQueueFamilies = { indices.graphics_family.value(), indices.present_family.value() };
+
+    float queuePriority = 1.0f;
+    for (uint32_t queueFamily : uniqueQueueFamilies) {
+        VkDeviceQueueCreateInfo queueCreateInfo {};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queueFamily;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.push_back(queueCreateInfo);
+    }
+
+    // areAllFeaturesSupported(physicalDevice);
+    // should be checked by the device scoring system (returns 0 if a requested feature/extension is not supported)
+
+    VkDeviceCreateInfo createInfo {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+    createInfo.pQueueCreateInfos = queueCreateInfos.data();
+
+    createInfo.pEnabledFeatures = &requested_features;
+
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(requested_extensions.size());
+    createInfo.ppEnabledExtensionNames = requested_extensions.data();
+
+    if (vkCreateDevice(m_physical_device, &createInfo, nullptr, &m_logical_device) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create logical device!");
+    }
+
+    vkGetDeviceQueue(m_logical_device, indices.graphics_family.value(), 0, &m_graphics_queue);
+    vkGetDeviceQueue(m_logical_device, indices.present_family.value(), 0, &m_present_queue);
+}
+
+void device_impl::create_allocator()
+{
+    VmaAllocatorCreateInfo allocatorInfo {};
+    allocatorInfo.instance = m_instance,
+    allocatorInfo.device = m_logical_device,
+    allocatorInfo.physicalDevice = m_physical_device,
+    allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_3,
+
+    vmaCreateAllocator(&allocatorInfo, &m_allocator);
+
+    m_logger.trace("Created allocator");
+}
+
+
 
 // device class
 device::device(const char* app_name,
     uint32_t app_version,
     uint32_t width,
-    uint32_t height)
-    : m_impl(std::make_unique<device_impl>(app_name,
+    uint32_t height,
+    std::vector<const char*>&& requested_extensions,
+    VkPhysicalDeviceFeatures&& requested_features)
+    : m_impl(std::make_shared<device_impl>(app_name,
         app_version,
         "quix",
         VK_MAKE_VERSION(1, 0, 0),
         this,
         width,
-        height))
-{}
+        height, 
+        std::move(requested_extensions), 
+        std::move(requested_features)))
+{
+}
 
 device::~device() = default;
 
