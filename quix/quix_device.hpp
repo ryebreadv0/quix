@@ -4,6 +4,7 @@
 namespace quix {
 
 class device_impl;
+class swapchain;
 
 class device {
 public:
@@ -19,9 +20,13 @@ public:
     device& operator=(device&&) = delete;
 
     NODISCARD GLFWwindow* window() const noexcept;
+    void create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
 
 private:
-    std::shared_ptr<device_impl> m_impl;
+    NODISCARD std::shared_ptr<device_impl> impl() const noexcept;
+
+    std::shared_ptr<device_impl> m_impl = nullptr;
+    std::shared_ptr<swapchain> m_swapchain = nullptr;
 };
 
 } // namespace quix

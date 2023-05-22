@@ -8,7 +8,7 @@ namespace quix
 
 logger::logger(const char* name)
 {
-    spdlog::set_pattern("%^[%T] %n: %v%$");
+    // spdlog::set_pattern("%^[%T] %n: %v%$");
     m_logger = std::make_shared<spdlog::logger>(name);
     m_logger->set_level(spdlog::level::info);
 

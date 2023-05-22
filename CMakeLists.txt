@@ -8,7 +8,9 @@ project(quix)
 
 add_library(${PROJECT_NAME} 
     quix/quix_device.cpp
+    quix/quix_device_impl.cpp
     quix/quix_logger.cpp
+    quix/quix_swapchain.cpp
 )
 
 target_precompile_headers(${PROJECT_NAME} 
@@ -19,12 +21,6 @@ include(cmake/CPM.cmake)
 
 CPMAddPackage("gh:gabime/spdlog@1.11.0")
 CPMAddPackage("gh:glfw/glfw#3.3.7")
-# CPMAddPackage(
-#     NAME VulkanMemoryAllocator
-#     GITHUB_REPOSITORY GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
-#     GIT_VERSION 3.1.0
-#     DOWNLOAD_ONLY YES
-# )
 
 find_package(spdlog REQUIRED)
 find_package(Vulkan REQUIRED)

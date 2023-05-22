@@ -18,7 +18,8 @@
 #include <string>
 #include <ranges>
 #include <memory>
-
+#include <algorithm>
+#include <limits>
 
 #include <cmath>
 

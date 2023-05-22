@@ -29,7 +29,7 @@ public:
 
     std::shared_ptr<spdlog::logger>& get_logger();
 
-    auto& get_sink(uint32_t index) {
+    auto& get_sink(uint32_t index) const {
         return m_logger->sinks()[index];
     }
 
@@ -40,27 +40,27 @@ public:
 
 
     template <typename... Args>
-    inline void trace(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+    inline void trace(spdlog::format_string_t<Args...> fmt, Args &&... args) const {
         m_logger->trace(fmt, std::forward<Args>(args)...);
     }
     template <typename... Args>
-    inline void debug(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+    inline void debug(spdlog::format_string_t<Args...> fmt, Args &&... args) const {
         m_logger->debug(fmt, std::forward<Args>(args)...);
     }
     template <typename... Args>
-    inline void info(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+    inline void info(spdlog::format_string_t<Args...> fmt, Args &&... args) const {
         m_logger->info(fmt, std::forward<Args>(args)...);
     }
     template <typename... Args>
-    inline void warn(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+    inline void warn(spdlog::format_string_t<Args...> fmt, Args &&... args) const {
         m_logger->warn(fmt, std::forward<Args>(args)...);
     }
     template <typename... Args>
-    inline void error(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+    inline void error(spdlog::format_string_t<Args...> fmt, Args &&... args) const {
         m_logger->error(fmt, std::forward<Args>(args)...);
     }
     template <typename... Args>
-    inline void critical(spdlog::format_string_t<Args...> fmt, Args &&... args) {
+    inline void critical(spdlog::format_string_t<Args...> fmt, Args &&... args) const {
         m_logger->critical(fmt, std::forward<Args>(args)...);
     }
 
