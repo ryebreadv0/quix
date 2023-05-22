@@ -11,17 +11,30 @@ add_library(${PROJECT_NAME}
     quix/quix_logger.cpp
 )
 
+target_precompile_headers(${PROJECT_NAME} 
+    PUBLIC quix/quix_pch.hpp
+)
+
 include(cmake/CPM.cmake)
 
 CPMAddPackage("gh:gabime/spdlog@1.11.0")
+CPMAddPackage("gh:glfw/glfw#3.3.7")
 
 find_package(spdlog REQUIRED)
+find_package(Vulkan REQUIRED)
+find_package(glfw REQUIRED)
+
+
 target_link_libraries(${PROJECT_NAME} 
     spdlog::spdlog
+    Vulkan::Vulkan
+    glfw
 )
 target_include_directories(${PROJECT_NAME} 
     PUBLIC ${PROJECT_SOURCE_DIR}/quix
     PUBLIC ${spdlog_SOURCE_DIRS}/include
+    PUBLIC ${Vulkan_INCLUDE_DIRS}
+    PUBLIC ${glfw_SOURCE_DIRS}/include
 )
 
 

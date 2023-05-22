@@ -1,12 +1,6 @@
 #ifndef _QUIX_LOGGER_HPP
 #define _QUIX_LOGGER_HPP
 
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/sinks/basic_file_sink.h>
-
-#include <string_view>
-
 namespace quix
 {
 
@@ -21,8 +15,16 @@ public:
     logger(logger&&) = delete;
     logger& operator=(logger&&) = delete;
 
-    static void set_pattern(std::string_view pattern) {
-        spdlog::set_pattern(pattern.data());
+    inline void set_pattern(const char* pattern) {
+        m_logger->set_pattern(pattern);
+    }
+
+    inline void set_pattern() {
+        m_logger->set_pattern("%^[%T] [%n:%l] %v%$");
+    }
+
+    inline void set_level(spdlog::level::level_enum level) {
+        m_logger->set_level(level);
     }
 
     std::shared_ptr<spdlog::logger>& get_logger();

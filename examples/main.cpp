@@ -1,16 +1,27 @@
-#include "quix_logger.hpp"
+#include "quix_device.hpp"
+
+static constexpr int WIDTH = 800;
+static constexpr int HEIGHT = 600;
 
 int main()
 {
-    quix::logger logger("log1");
-    
-    logger.add_sink(
-        std::make_shared
-        <spdlog::sinks::basic_file_sink_mt>(
-        "logs/logger.log", true
-    ));
 
-    logger.info("Hello, World!");
+
+    quix::device device("quix_example", VK_MAKE_VERSION(0, 0, 1));
+    
+    auto window = device.window();
+
+
+
+    while (glfwWindowShouldClose(window) == GLFW_FALSE)
+    {
+        glfwPollEvents();
+        glfwSwapBuffers(window);
+    }
+
+
+    
+    glfwTerminate();
     
     return 0;
 }
