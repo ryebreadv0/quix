@@ -1,6 +1,8 @@
 #ifndef _QUIX_SWAPCHAIN_CPP
 #define _QUIX_SWAPCHAIN_CPP
 
+// this has to be included before?
+
 #include "quix_swapchain.hpp"
 
 #include "quix_device.hpp"
@@ -9,8 +11,8 @@
 
 namespace quix {
 
-swapchain::swapchain(std::shared_ptr<device> device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
-    : m_device(device), m_frames_in_flight(frames_in_flight), m_present_mode(present_mode), m_logger("swapchain")
+swapchain::swapchain(std::shared_ptr<device> p_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
+    : m_device(p_device), m_frames_in_flight(frames_in_flight), m_present_mode(present_mode), m_logger("swapchain")
 {
     m_logger.set_level(spdlog::level::trace);
     m_logger.add_sink(m_device->get_sink());

@@ -44,6 +44,12 @@ device::device(const char* app_name,
 
 device::~device()
 {
+#ifdef _DEBUG
+    if (initialized != true) {
+        m_logger.error("device was never initialized");
+    }
+#endif
+
     vmaDestroyAllocator(m_allocator);
     m_logger.trace("VMA allocator destroyed");
 
@@ -70,6 +76,14 @@ device::~device()
 
 void device::init(std::vector<const char*>&& requested_extensions, VkPhysicalDeviceFeatures requested_features)
 {
+#ifdef _DEBUG
+    if (initialized != false) {
+        m_logger.error("device already initialized");
+        throw std::runtime_error("device already initialized");
+    }
+    initialized = true;
+#endif
+
     this->requested_extensions = std::move(requested_extensions);
     this->requested_features = requested_features;
 

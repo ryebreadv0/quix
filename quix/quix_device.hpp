@@ -3,12 +3,12 @@
 
 #include "quix_common.hpp"
 
+#include "quix_instance.hpp"
+
 namespace quix {
 
-class instance;
-
-class device {
-    friend class swapchain;
+typedef class instance::device {
+    friend class instance::swapchain;
 public:
     device(const char* app_name,
         uint32_t app_version,
@@ -55,8 +55,11 @@ private:
 
     // instance variables
     GLFWwindow* window;
-
     logger m_logger;
+
+#ifdef _DEBUG
+    bool initialized = false;
+#endif
 
     VkInstance m_instance = VK_NULL_HANDLE;
     VkPhysicalDevice m_physical_device = VK_NULL_HANDLE;
@@ -75,7 +78,7 @@ private:
     VkPhysicalDeviceFeatures requested_features;
 
     std::optional<queue_family_indices> m_queue_family_indices;
-};
+} device;
 
 
 

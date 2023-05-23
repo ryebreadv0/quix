@@ -24,16 +24,6 @@ instance::instance(const char* app_name,
 
 instance::~instance() = default;
 
-NODISCARD GLFWwindow*
-instance::window() const noexcept
-{
-    return m_device->get_window();
-}
-
-NODISCARD std::shared_ptr<device> instance::impl() const noexcept {
-    return m_device;
-}
-
 void instance::create_device(std::vector<const char*>&& requested_extensions, VkPhysicalDeviceFeatures requested_features)
 {
     m_device->init(std::move(requested_extensions), requested_features);
@@ -42,6 +32,16 @@ void instance::create_device(std::vector<const char*>&& requested_extensions, Vk
 void instance::create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
 {
     m_swapchain = std::make_shared<swapchain>(m_device, frames_in_flight, present_mode);
+}
+
+NODISCARD GLFWwindow*
+instance::window() const noexcept
+{
+    return m_device->get_window();
+}
+
+NODISCARD std::shared_ptr<device> instance::impl() const noexcept {
+    return m_device;
 }
  
 

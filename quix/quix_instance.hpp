@@ -3,13 +3,10 @@
 
 namespace quix {
 
-class device;
-class swapchain;
-
 class instance {
 public:
-    instance(const char* app_name, uint32_t app_version, uint32_t width, uint32_t height);
 
+    instance(const char* app_name, uint32_t app_version, uint32_t width, uint32_t height);
     ~instance();
 
     instance(const instance&) = delete;
@@ -23,13 +20,16 @@ public:
     NODISCARD GLFWwindow* window() const noexcept;
 
 private:
+    class device;
+    class swapchain;
+
     friend class swapchain;
-    
     
     NODISCARD std::shared_ptr<device> impl() const noexcept;
 
     std::shared_ptr<device> m_device = nullptr;
     std::shared_ptr<swapchain> m_swapchain = nullptr;
+
 };
 
 } // namespace quix

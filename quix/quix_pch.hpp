@@ -31,3 +31,5 @@
 #include "quix_logger.hpp"
 
 #define NODISCARD [[nodiscard]]
+
+
