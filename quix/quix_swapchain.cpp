@@ -3,13 +3,13 @@
 
 #include "quix_swapchain.hpp"
 
-#include "quix_device_impl.hpp"
 #include "quix_device.hpp"
+#include "quix_instance.hpp"
 #include "quix_common.hpp"
 
 namespace quix {
 
-swapchain::swapchain(std::shared_ptr<device_impl> device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
+swapchain::swapchain(std::shared_ptr<device> device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
     : m_device(device), m_frames_in_flight(frames_in_flight), m_present_mode(present_mode), m_logger("swapchain")
 {
     m_logger.set_level(spdlog::level::trace);

@@ -1,4 +1,4 @@
-#include "quix_device.hpp"
+#include "quix_instance.hpp"
 #include "quix_shader.hpp"
 
 static constexpr int WIDTH = 800;
@@ -6,17 +6,20 @@ static constexpr int HEIGHT = 600;
 
 int main()
 {
-    quix::device device("quix_example", 
+    quix::instance instance("quix_example", 
         VK_MAKE_VERSION(0, 0, 1), 
-        WIDTH, HEIGHT,
-        {VK_KHR_SWAPCHAIN_EXTENSION_NAME}, {.tessellationShader = VK_TRUE}
+        WIDTH, HEIGHT
     );
 
-    device.create_swapchain(2, VK_PRESENT_MODE_FIFO_KHR);
+    instance.create_device( {VK_KHR_SWAPCHAIN_EXTENSION_NAME},
+        {.tessellationShader = VK_TRUE}
+    );
+
+    instance.create_swapchain(2, VK_PRESENT_MODE_FIFO_KHR);
 
     quix::shader s("examples/simpleshader.frag", EShLangFragment);
     
-    auto* window = device.window();
+    auto* window = instance.window();
 
     while (glfwWindowShouldClose(window) == GLFW_FALSE)
     {

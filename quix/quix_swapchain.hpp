@@ -4,7 +4,7 @@
 namespace quix {
 
 class device;
-class device_impl;
+class device;
 
 struct queue_family_indices;
 
@@ -12,7 +12,7 @@ class swapchain {
     friend class device;
 public:
 
-    swapchain(std::shared_ptr<device_impl> device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
+    swapchain(std::shared_ptr<device> device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
 
     ~swapchain();
     swapchain(const swapchain&) = delete;
@@ -30,7 +30,7 @@ private:
     VkPresentModeKHR choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes) const noexcept;
     VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR& capabilities) const noexcept;
 
-    std::shared_ptr<device_impl> m_device;
+    std::shared_ptr<device> m_device;
     const int32_t m_frames_in_flight;
     const VkPresentModeKHR m_present_mode;
     logger m_logger;

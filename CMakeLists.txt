@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.26.0)
+cmake_minimum_required(VERSION 3.24.0)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(_DEBUG)
@@ -7,11 +7,12 @@ endif()
 project(quix)
 
 add_library(${PROJECT_NAME} 
+    quix/quix_instance.cpp
     quix/quix_device.cpp
-    quix/quix_device_impl.cpp
     quix/quix_logger.cpp
     quix/quix_swapchain.cpp
     quix/quix_shader.cpp
+    quix/quix_pipeline.cpp
 )
 
 target_precompile_headers(${PROJECT_NAME} 
@@ -31,8 +32,6 @@ CPMAddPackage(
     DOWNLOAD_ONLY True
 )
 
-# build glslang
-
 # execute python program to get glslang externals
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
@@ -50,9 +49,6 @@ find_package(spdlog REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(glfw REQUIRED)
 find_package(glslang REQUIRED)
-
-
-
 
 add_library(VulkanMemoryAllocator
     quix/quix_vma.cpp
@@ -78,11 +74,11 @@ target_link_libraries(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME} 
     PUBLIC ${PROJECT_SOURCE_DIR}/quix
+    PUBLIC ${PROJECT_SOURCE_DIR}/include
     PUBLIC ${spdlog_SOURCE_DIRS}/include
     PUBLIC ${Vulkan_INCLUDE_DIRS}
     PUBLIC ${glfw_SOURCE_DIRS}/include
 )
-
 
 
 
@@ -93,8 +89,10 @@ add_executable(quix_example
 target_link_libraries(quix_example 
     ${PROJECT_NAME}
 )
+
 target_include_directories(quix_example 
     PUBLIC ${PROJECT_SOURCE_DIR}/quix
+    PUBLIC ${PROJECT_SOURCE_DIR}/include
     PUBLIC ${spdlog_SOURCE_DIRS}/include
 )
 

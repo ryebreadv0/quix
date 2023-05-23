@@ -24,6 +24,7 @@
 #include <memory>
 #include <algorithm>
 #include <limits>
+#include <ranges>
 
 #include <cmath>
 
