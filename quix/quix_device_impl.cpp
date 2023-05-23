@@ -32,6 +32,9 @@ device_impl::device_impl(const char* app_name,
 
     m_logger.info("requested extensions: {}", requested_extensions.size());
 
+    glslang::InitializeProcess();
+    m_logger.trace("glslang initialized");
+
     auto result = glfwInit();
     if (result == GLFW_FALSE) {
         spdlog::error("Failed to initialize GLFW");
@@ -70,6 +73,9 @@ device_impl::~device_impl()
 
     glfwTerminate();
     m_logger.trace("GLFW terminated");
+
+    glslang::FinalizeProcess();
+    m_logger.trace("glslang finalized");
 
     m_logger.trace("device_impl class destroyed");
 }

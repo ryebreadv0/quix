@@ -1,4 +1,5 @@
 #include "quix_device.hpp"
+#include "quix_shader.hpp"
 
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
@@ -12,6 +13,8 @@ int main()
     );
 
     device.create_swapchain(2, VK_PRESENT_MODE_FIFO_KHR);
+
+    quix::shader s("examples/simpleshader.frag", EShLangFragment);
     
     auto* window = device.window();
 
