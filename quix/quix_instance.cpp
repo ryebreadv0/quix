@@ -40,7 +40,7 @@ instance::window() const noexcept
     return m_device->get_window();
 }
 
-NODISCARD std::shared_ptr<device> instance::impl() const noexcept {
+NODISCARD std::shared_ptr<device> instance::get_device() const noexcept {
     return m_device;
 }
  

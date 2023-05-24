@@ -5,6 +5,8 @@
 
 #include "quix_swapchain.hpp"
 
+#include <utility>
+
 #include "quix_device.hpp"
 #include "quix_instance.hpp"
 #include "quix_common.hpp"
@@ -118,7 +120,7 @@ void swapchain::create_image_views()
         }
     }
 
-    m_logger.trace("Created image views");
+    m_logger.trace("created image views");
 }
 
 void swapchain::destroy_image_views()
@@ -126,11 +128,12 @@ void swapchain::destroy_image_views()
     for (auto& image_view : m_swapchain_image_views) {
         vkDestroyImageView(m_device->get_logical_device(), image_view, nullptr);
     }
+    m_logger.trace("destroyed image views");
 }
 
 
 
-VkSurfaceFormatKHR swapchain::choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& available_formats) const noexcept
+NODISCARD VkSurfaceFormatKHR swapchain::choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& available_formats) const noexcept
 {
     for (const auto& format : available_formats) {
         if (format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
@@ -142,7 +145,7 @@ VkSurfaceFormatKHR swapchain::choose_swap_surface_format(const std::vector<VkSur
     return available_formats[0];
 }
 
-VkPresentModeKHR swapchain::choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes) const noexcept 
+NODISCARD VkPresentModeKHR swapchain::choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes) const noexcept 
 {
     for (const auto& availablePresentMode : available_present_modes) {
         if (availablePresentMode == m_present_mode) {
@@ -154,7 +157,7 @@ VkPresentModeKHR swapchain::choose_swap_present_mode(const std::vector<VkPresent
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkExtent2D swapchain::choose_swap_extent(const VkSurfaceCapabilitiesKHR& capabilities) const noexcept
+NODISCARD VkExtent2D swapchain::choose_swap_extent(const VkSurfaceCapabilitiesKHR& capabilities) const noexcept
 {
     if (capabilities.currentExtent.width != UINT32_MAX) {
         return capabilities.currentExtent;

@@ -2,7 +2,6 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-
 #include <GLFW/glfw3native.h>
 
 #include <vma/vk_mem_alloc.h>
@@ -24,7 +23,6 @@
 #include <memory>
 #include <algorithm>
 #include <limits>
-#include <ranges>
 
 #include <cmath>
 

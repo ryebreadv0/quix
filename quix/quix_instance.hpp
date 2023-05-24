@@ -25,7 +25,7 @@ private:
 
     friend class swapchain;
     
-    NODISCARD std::shared_ptr<device> impl() const noexcept;
+    NODISCARD std::shared_ptr<device> get_device() const noexcept;
 
     std::shared_ptr<device> m_device = nullptr;
     std::shared_ptr<swapchain> m_swapchain = nullptr;

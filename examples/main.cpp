@@ -17,7 +17,7 @@ int main()
 
     instance.create_swapchain(2, VK_PRESENT_MODE_FIFO_KHR);
 
-    quix::shader s("examples/simpleshader.frag", EShLangFragment);
+    quix::shader shader("examples/simpleshader.frag", EShLangFragment);
     
     auto* window = instance.window();
 

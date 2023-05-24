@@ -191,6 +191,29 @@ void shader::compileShader(EShLanguage stage, const char* path, const char* cSpv
         throw std::runtime_error("failed to optimize shader!");
     }
 
+    spvtools::SpirvTools core(SPV_ENV_UNIVERSAL_1_3);
+    core.SetMessageConsumer([](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message) {
+        if (level == SPV_MSG_FATAL || level == SPV_MSG_INTERNAL_ERROR)
+            throw std::runtime_error(message);
+        else if (level == SPV_MSG_ERROR)
+            spdlog::error("{}: {}", position.index, message);
+        else if (level == SPV_MSG_WARNING)
+            spdlog::warn("{}: {}", position.index, message);
+        else if (level == SPV_MSG_INFO)
+            spdlog::info("{}: {}", position.index, message);
+        else if (level == SPV_MSG_DEBUG)
+            spdlog::debug("{}: {}", position.index, message);
+    });
+
+    bool validationResult = core.Validate(code);
+    if (validationResult != true) {
+        
+        spdlog::error("Error in {}", path);
+
+        throw std::runtime_error("failed to validate shader!");
+    }
+
+
     // save the spv code to a file
     saveSpvCode(cSpvPath);
 }

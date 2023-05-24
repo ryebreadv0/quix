@@ -8,6 +8,12 @@ public:
     shader(const char* path, EShLanguage stage);
     ~shader();
 
+    shader(const shader&) = delete;
+    shader& operator=(const shader&) = delete;
+    shader(shader&&) = delete;
+    shader& operator=(shader&&) = delete;
+    
+
     static void setShaderVersion(uint32_t apiVersion);
 
     std::vector<uint32_t> getSpirvCode();

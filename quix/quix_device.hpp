@@ -7,7 +7,7 @@
 
 namespace quix {
 
-typedef class instance::device {
+using device = class instance::device {
     friend class instance::swapchain;
 public:
     device(const char* app_name,
@@ -73,12 +73,11 @@ private:
 
     static constexpr uint32_t vk_api_version = VK_API_VERSION_1_3;
 
-    std::vector<const char*> requested_extensions;
-
-    VkPhysicalDeviceFeatures requested_features;
+    std::vector<const char*> requested_extensions{};
+    VkPhysicalDeviceFeatures requested_features{};
 
     std::optional<queue_family_indices> m_queue_family_indices;
-} device;
+};
 
 
 

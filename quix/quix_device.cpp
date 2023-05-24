@@ -3,8 +3,6 @@
 
 #include "quix_device.hpp"
 
-#include "quix_instance.hpp"
-
 namespace quix {
 
 device::device(const char* app_name,
@@ -77,7 +75,7 @@ device::~device()
 void device::init(std::vector<const char*>&& requested_extensions, VkPhysicalDeviceFeatures requested_features)
 {
 #ifdef _DEBUG
-    if (initialized != false) {
+    if (initialized) {
         m_logger.error("device already initialized");
         throw std::runtime_error("device already initialized");
     }
@@ -474,7 +472,7 @@ void device::create_logical_device()
     std::set<uint32_t> uniqueQueueFamilies = { indices.graphics_family.value(), indices.present_family.value() };
 
     float queuePriority = 1.0f;
-    for (uint32_t queueFamily : uniqueQueueFamilies) {
+    for (const uint32_t queueFamily : uniqueQueueFamilies) {
         VkDeviceQueueCreateInfo queueCreateInfo {};
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         queueCreateInfo.queueFamilyIndex = queueFamily;
