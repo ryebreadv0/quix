@@ -1,17 +1,19 @@
 #ifndef _QUIX_SWAPCHAIN_HPP
 #define _QUIX_SWAPCHAIN_HPP
 
-#include "quix_instance.hpp"
+// #include "quix_instance.hpp"
 
 namespace quix {
 
+class device;
+
 struct queue_family_indices;
 
-using swapchain = class instance::swapchain {
-    friend class instance::device;
+class swapchain {
+    friend class device;
 public:
 
-    swapchain(std::shared_ptr<instance::device> p_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
+    swapchain(std::shared_ptr<device> p_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
 
     ~swapchain();
     swapchain(const swapchain&) = delete;
@@ -29,7 +31,7 @@ private:
     NODISCARD VkPresentModeKHR choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes) const noexcept;
     NODISCARD VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR& capabilities) const noexcept;
 
-    std::shared_ptr<instance::device> m_device; 
+    std::shared_ptr<device> m_device; 
     const int32_t m_frames_in_flight;
     const VkPresentModeKHR m_present_mode;
     logger m_logger;

@@ -7,14 +7,17 @@
 
 #include <utility>
 
-#include "quix_device.hpp"
-#include "quix_instance.hpp"
 #include "quix_common.hpp"
+#include "quix_instance.hpp"
+#include "quix_device.hpp"
 
 namespace quix {
 
 swapchain::swapchain(std::shared_ptr<device> p_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
-    : m_device(p_device), m_frames_in_flight(frames_in_flight), m_present_mode(present_mode), m_logger("swapchain")
+    : m_device(p_device)
+    , m_frames_in_flight(frames_in_flight)
+    , m_present_mode(present_mode)
+    , m_logger("swapchain")
 {
     m_logger.set_level(spdlog::level::trace);
     m_logger.add_sink(m_device->get_sink());
@@ -24,7 +27,7 @@ swapchain::swapchain(std::shared_ptr<device> p_device, const int32_t frames_in_f
     create_image_views();
 }
 
-swapchain::~swapchain() 
+swapchain::~swapchain()
 {
     destroy_image_views();
     destroy_swapchain();
@@ -32,7 +35,7 @@ swapchain::~swapchain()
     m_logger.trace("Destroyed swapchain class");
 }
 
-void swapchain::create_swapchain() 
+void swapchain::create_swapchain()
 {
     swapchain_support_details swapchain_support = m_device->query_swapchain_support(m_device->get_physical_device());
 
@@ -45,7 +48,7 @@ void swapchain::create_swapchain()
         imageCount = swapchain_support.capabilities.maxImageCount;
     }
 
-    VkSwapchainCreateInfoKHR createInfo{};
+    VkSwapchainCreateInfoKHR createInfo {};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.surface = m_device->get_surface();
 
@@ -57,7 +60,7 @@ void swapchain::create_swapchain()
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     queue_family_indices indices = m_device->find_queue_families(m_device->get_physical_device());
-    uint32_t queueFamilyIndices[] = {indices.graphics_family.value(), indices.present_family.value()};
+    uint32_t queueFamilyIndices[] = { indices.graphics_family.value(), indices.present_family.value() };
 
     if (indices.graphics_family != indices.present_family) {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
@@ -88,7 +91,7 @@ void swapchain::create_swapchain()
     m_logger.trace("Created swapchain");
 }
 
-void swapchain::destroy_swapchain() 
+void swapchain::destroy_swapchain()
 {
     vkDestroySwapchainKHR(m_device->get_logical_device(), m_swapchain, nullptr);
     m_logger.trace("Destroyed swapchain");
@@ -99,7 +102,7 @@ void swapchain::create_image_views()
     m_swapchain_image_views.resize(m_swapchain_images.size());
 
     for (int i = 0; i < m_swapchain_images.size(); i++) {
-        VkImageViewCreateInfo createInfo{};
+        VkImageViewCreateInfo createInfo {};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = m_swapchain_images[i];
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -131,8 +134,6 @@ void swapchain::destroy_image_views()
     m_logger.trace("destroyed image views");
 }
 
-
-
 NODISCARD VkSurfaceFormatKHR swapchain::choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& available_formats) const noexcept
 {
     for (const auto& format : available_formats) {
@@ -145,7 +146,7 @@ NODISCARD VkSurfaceFormatKHR swapchain::choose_swap_surface_format(const std::ve
     return available_formats[0];
 }
 
-NODISCARD VkPresentModeKHR swapchain::choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes) const noexcept 
+NODISCARD VkPresentModeKHR swapchain::choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes) const noexcept
 {
     for (const auto& availablePresentMode : available_present_modes) {
         if (availablePresentMode == m_present_mode) {

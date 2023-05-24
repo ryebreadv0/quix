@@ -7,8 +7,9 @@
 
 namespace quix {
 
-using device = class instance::device {
-    friend class instance::swapchain;
+// using device = class instance::device {
+class device {
+    friend class swapchain;
 public:
     device(const char* app_name,
         uint32_t app_version,

@@ -23,11 +23,14 @@
 #include <memory>
 #include <algorithm>
 #include <limits>
+#include <memory_resource>
 
 #include <cmath>
 
 #include "quix_logger.hpp"
 
 #define NODISCARD [[nodiscard]]
+
+#define MAYBEUNUSED [[maybe_unused]]
 
 

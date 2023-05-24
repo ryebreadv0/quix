@@ -1,11 +1,14 @@
 #include "quix_instance.hpp"
 #include "quix_shader.hpp"
+#include "quix_pipeline.hpp"
 
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
 
 int main()
 {
+    quix::graphics::pipeline_info pipeline_info{};
+
     quix::instance instance("quix_example", 
         VK_MAKE_VERSION(0, 0, 1), 
         WIDTH, HEIGHT

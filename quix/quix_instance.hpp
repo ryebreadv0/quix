@@ -3,6 +3,11 @@
 
 namespace quix {
 
+// namespace {
+    class device;
+    class swapchain;
+// }
+
 class instance {
 public:
 
@@ -20,8 +25,8 @@ public:
     NODISCARD GLFWwindow* window() const noexcept;
 
 private:
-    class device;
-    class swapchain;
+    // class device;
+    // class swapchain;
 
     friend class swapchain;
     
