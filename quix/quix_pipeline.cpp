@@ -66,47 +66,51 @@ namespace graphics {
         };
     }
 
-
-
-
     // pipeline_info struct
 
     // pipeline_info struct end
 
-    void pipeline::create_pipeline_layout(VkDevice device, const VkPipelineLayoutCreateInfo* pipeline_create_info)
+    pipeline::pipeline(VkDevice device, const VkPipelineLayoutCreateInfo* pipeline_layout_info,
+        const VkRenderPassCreateInfo* renderpass_info, VkGraphicsPipelineCreateInfo* pipeline_create_info)
+        : m_device(device)
     {
+        create_pipeline_layout(device, pipeline_layout_info);
+        create_renderpass(device, renderpass_info);
+        create_pipeline(device, pipeline_create_info);
+        for (int i = 0; i < pipeline_create_info->stageCount; i++) {
+            vkDestroyShaderModule(device, pipeline_create_info->pStages[i].module, nullptr);
+        }
+    }
 
-        if (pipeline_create_info == nullptr) {
-            pipeline_create_info = &defaults::layout_create_info;
+    pipeline::~pipeline()
+    {
+        vkDestroyPipelineLayout(m_device, m_pipeline_layout, nullptr);
+        vkDestroyRenderPass(m_device, m_render_pass, nullptr);
+        vkDestroyPipeline(m_device, m_pipeline, nullptr);
+    }
+
+    void pipeline::create_pipeline_layout(VkDevice device, const VkPipelineLayoutCreateInfo* pipeline_layout_info)
+    {
+        if (pipeline_layout_info == nullptr) {
+            pipeline_layout_info = &defaults::layout_create_info;
         }
 
-        if (vkCreatePipelineLayout(device, pipeline_create_info, nullptr, &pipeline_layout) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(device, pipeline_layout_info, nullptr, &m_pipeline_layout) != VK_SUCCESS) {
             spdlog::error("failed to create pipeline layout!");
             throw std::runtime_error("failed to create pipeline layout!");
         }
     }
 
-    void pipeline::create_renderpass(VkDevice device, const renderpass_info* renderpass_info)
+    void pipeline::create_renderpass(VkDevice device, const VkRenderPassCreateInfo* renderpass_info)
     {
-        VkRenderPassCreateInfo renderpass_create_info = {
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-            .pNext = nullptr,
-            .flags = 0,
-            .attachmentCount = (uint32_t)renderpass_info->attachments.size(),
-            .pAttachments = renderpass_info->attachments.data(),
-            .subpassCount = (uint32_t)renderpass_info->subpasses.size(),
-            .pSubpasses = renderpass_info->subpasses.data(),
-            .dependencyCount = (uint32_t)renderpass_info->subpass_dependencies.size(),
-            .pDependencies = renderpass_info->subpass_dependencies.data()
-        };
 
-        if (vkCreateRenderPass(device, &renderpass_create_info, nullptr, &render_pass) != VK_SUCCESS) {
+        if (vkCreateRenderPass(device, renderpass_info, nullptr, &m_render_pass) != VK_SUCCESS) {
             spdlog::error("failed to create render pass!");
             throw std::runtime_error("failed to create render pass!");
         }
     }
 
-    void pipeline::create_pipeline(VkDevice device, const VkGraphicsPipelineCreateInfo* pipeline_create_info)
+    void pipeline::create_pipeline(VkDevice device, VkGraphicsPipelineCreateInfo* pipeline_create_info)
     {
         // VkGraphicsPipelineCreateInfo pipeline_create_info = {
         //     .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -130,13 +134,13 @@ namespace graphics {
         //     .basePipelineIndex = -1
         // };
 
-        // pipeline_info->graphics_pipeline_create_info.layout = pipeline_layout;
-        // pipeline_info->graphics_pipeline_create_info.renderPass = render_pass;
+        pipeline_create_info->layout = m_pipeline_layout;
+        pipeline_create_info->renderPass = m_render_pass;
 
-        // if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipeline_info->graphics_pipeline_create_info, nullptr, &pipeline) != VK_SUCCESS) {
-        //     spdlog::error("failed to create graphics pipeline!");
-        //     throw std::runtime_error("failed to create graphics pipeline!");
-        // }
+        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, pipeline_create_info, nullptr, &m_pipeline) != VK_SUCCESS) {
+            spdlog::error("failed to create graphics pipeline!");
+            throw std::runtime_error("failed to create graphics pipeline!");
+        }
     }
 
 } // namespace graphics

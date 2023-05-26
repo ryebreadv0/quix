@@ -1,6 +1,6 @@
+#include "quix_common.hpp"
 #include "quix_instance.hpp"
 #include "quix_pipeline.hpp"
-#include "quix_shader.hpp"
 
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
@@ -18,29 +18,36 @@ int main()
 
     auto device = instance.get_logical_device();
 
+    quix::graphics::renderpass_info<1, 1, 0> renderpass_info = {
+        { VkAttachmentDescription {
+            .format = instance.get_surface_format().format,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR } },
+        { VkAttachmentReference {
+            .attachment = 0,
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } },
+        { VkSubpassDescription {
+            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &renderpass_info.attachments_references[0] } },
+        {}
+    };
+
     quix::graphics::pipeline_builder pipeline_builder(device);
     
-    auto shader_stages = quix::graphics::pipeline_builder::create_shader_array(
-        pipeline_builder.create_shader_stage("examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
-    );
-
-    pipeline_builder.create_shader_stages(shader_stages.data(), shader_stages.size());
-
-
-    // quix::graphics::pipeline_info pipeline_info {};
-
-    // auto shader_stages = quix::graphics::create_shader_stages(
-    //     quix::graphics::create_shader_stage(device, "examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
-    // );
-
-    // VkPushConstantRange push_constant_range {
-    //     .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-    //     .offset = 0,
-    //     .size = sizeof(float) * 4
-    // };
-
-    // auto pipeline_layout = quix::graphics::create_pipeline_layout_info(
-    //     nullptr, 0, &push_constant_range, 1);
+    auto shader_stages = pipeline_builder.create_shader_array(
+        pipeline_builder.create_shader_stage("examples/simpleshader.vert", VK_SHADER_STAGE_VERTEX_BIT),
+        pipeline_builder.create_shader_stage("examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+    
+    auto pipeline = pipeline_builder.add_shader_stages(shader_stages)
+                        .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float)*4)
+                        .add_renderpass_info(renderpass_info.create_renderpass_info())
+                        .create_graphics_pipeline();
 
     auto* window = instance.window();
 

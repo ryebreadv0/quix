@@ -2,22 +2,52 @@ namespace quix {
 
 namespace graphics {
 
-   
+    class pipeline {
+    public:
+        pipeline(VkDevice device, const VkPipelineLayoutCreateInfo* pipeline_layout_info,
+            const VkRenderPassCreateInfo* renderpass_info, VkGraphicsPipelineCreateInfo* pipeline_create_info);
+
+        ~pipeline();
+
+        pipeline(const pipeline&) = delete;
+        pipeline& operator=(const pipeline&) = delete;
+        pipeline(pipeline&&) = delete;
+        pipeline& operator=(pipeline&&) = delete;
+
+    private:
+        VkDevice m_device;
+
+        VkPipeline m_pipeline;
+        VkPipelineLayout m_pipeline_layout;
+        VkRenderPass m_render_pass;
+
+        void create_pipeline_layout(VkDevice device, const VkPipelineLayoutCreateInfo* pipeline_layout_info);
+        void create_renderpass(VkDevice device, const VkRenderPassCreateInfo* renderpass_info);
+        void create_pipeline(VkDevice device, VkGraphicsPipelineCreateInfo* pipeline_create_info);
+    };
 
     class pipeline_builder {
     public:
-        constexpr pipeline_builder(VkDevice device) 
-        : device(device)
+        constexpr pipeline_builder(VkDevice device)
+            : device(device)
         {
             pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             pipeline_create_info.basePipelineHandle = nullptr;
             pipeline_create_info.basePipelineIndex = -1;
-            
+
             init_pipeline_defaults();
         }
 
-        VkPipelineShaderStageCreateInfo create_shader_stage(
+        NODISCARD VkPipelineShaderStageCreateInfo create_shader_stage(
             const char* file_path, const VkShaderStageFlagBits shader_stage);
+
+        NODISCARD pipeline create_graphics_pipeline()
+        {
+            create_pipeline_layout_info();
+
+            return pipeline { device, &m_layout_info, &m_renderpass_info, &pipeline_create_info };
+        }
+
     private:
         struct pipeline_info {
             VkPipelineVertexInputStateCreateInfo vertex_input_state;
@@ -30,16 +60,23 @@ namespace graphics {
             VkPipelineColorBlendAttachmentState color_blend_attachment_state;
             VkPipelineColorBlendStateCreateInfo color_blend_state;
             VkPipelineDynamicStateCreateInfo dynamic_state;
+
+            VkPushConstantRange push_constant_range{};
+            std::array<VkDescriptorSetLayout, 4> descriptor_set_layouts{};
+            uint32_t descriptor_set_layout_count{};
         };
 
         VkDevice device;
         pipeline_info info;
-        VkGraphicsPipelineCreateInfo pipeline_create_info{};
+        VkPipelineLayoutCreateInfo m_layout_info{};
+        VkRenderPassCreateInfo m_renderpass_info{};
+        VkGraphicsPipelineCreateInfo pipeline_create_info {};
 
-        inline constexpr void init_pipeline_defaults() {
+        inline constexpr void init_pipeline_defaults()
+        {
             create_vertex_state(nullptr, 0, nullptr, 0);
             create_input_assembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
-            create_viewport_state(nullptr, 0, nullptr, 0);
+            create_viewport_state(nullptr, 1, nullptr, 1);
             create_rasterization_state(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
             create_multisample_state(VK_SAMPLE_COUNT_1_BIT);
             create_depth_stencil_state(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
@@ -48,13 +85,34 @@ namespace graphics {
             create_dynamic_state(dynamic_states_default.data(), dynamic_states_default.size());
         }
 
-    public:
+        inline constexpr void create_pipeline_layout_info()
+        {
+            
+            m_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+            m_layout_info.pNext = nullptr;
+            m_layout_info.flags = 0;
+            m_layout_info.setLayoutCount = info.descriptor_set_layout_count;
+            m_layout_info.pSetLayouts = info.descriptor_set_layouts.data();
+            // count is set by add_push_constant
+            m_layout_info.pPushConstantRanges = &info.push_constant_range;
 
-        inline constexpr pipeline_builder& create_shader_stages(
+        }
+
+    public:
+        inline constexpr pipeline_builder& add_shader_stages(
             VkPipelineShaderStageCreateInfo* stages, const uint32_t stage_count)
-        {   
+        {
             pipeline_create_info.stageCount = stage_count;
             pipeline_create_info.pStages = stages;
+
+            return *this;
+        }
+        template <std::size_t stage_count>
+        inline constexpr pipeline_builder& add_shader_stages(
+            std::array<VkPipelineShaderStageCreateInfo, stage_count>& stages)
+        {
+            pipeline_create_info.stageCount = stage_count;
+            pipeline_create_info.pStages = stages.data();
 
             return *this;
         }
@@ -232,7 +290,7 @@ namespace graphics {
                 .alphaBlendOp = alpha_blend_op,
                 .colorWriteMask = color_write_mask
             };
-            
+
             return *this;
         }
 
@@ -294,25 +352,37 @@ namespace graphics {
             return *this;
         }
 
-        static inline constexpr VkPipelineLayoutCreateInfo create_pipeline_layout_info(
-            const VkDescriptorSetLayout* set_layout, const uint32_t set_layout_count,
-            const VkPushConstantRange* push_constant_range, const uint32_t push_constant_count)
+        inline constexpr pipeline_builder& add_push_constant(VkShaderStageFlags shader_flags, uint32_t size) noexcept
         {
-            return {
-                .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-                .pNext = nullptr,
-                .flags = 0,
-                .setLayoutCount = set_layout_count,
-                .pSetLayouts = set_layout,
-                .pushConstantRangeCount = push_constant_count,
-                .pPushConstantRanges = push_constant_range
+            info.push_constant_range = VkPushConstantRange {
+                .stageFlags = shader_flags,
+                .offset = 0,
+                .size = size
             };
+
+            m_layout_info.pushConstantRangeCount = 1;
+            return *this;
         }
 
-        template <typename Type, typename... Args>
-        static inline constexpr auto create_auto_array(Args&&... args)
+        inline constexpr pipeline_builder& add_descriptor_set_layout(VkDescriptorSetLayout layout) noexcept
         {
-            return std::array<Type, sizeof...(Args)> { std::forward<Args>(args)... };
+            if (info.descriptor_set_layout_count >= 3)
+            {
+                spdlog::error("descriptor set layout count exceeded, max is 4");
+                return *this;
+            }
+
+            info.descriptor_set_layouts[info.descriptor_set_layout_count] = layout;
+            ++info.descriptor_set_layout_count;
+
+            return *this;
+        }
+
+        inline constexpr pipeline_builder& add_renderpass_info(VkRenderPassCreateInfo&& renderpass_info)
+        {
+            m_renderpass_info = renderpass_info;
+
+            return *this;
         }
 
         template <typename... Args>
@@ -321,41 +391,13 @@ namespace graphics {
             return std::array<VkPipelineShaderStageCreateInfo, sizeof...(Args)> { std::forward<Args>(args)... };
         }
 
-        static constexpr std::array<VkDynamicState,2> dynamic_states_default = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+        static constexpr std::array<VkDynamicState, 2> dynamic_states_default = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
     }; // class pipeline_builder
-
 
 } // namespace graphics
 
 } // namespace quix
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // reserved
 

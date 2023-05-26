@@ -3,9 +3,9 @@
 
 #include "quix_instance.hpp"
 
+#include "quix_common.hpp"
 #include "quix_device.hpp"
 #include "quix_swapchain.hpp"
-#include "quix_common.hpp"
 
 namespace quix {
 
@@ -46,10 +46,15 @@ instance::get_logical_device() const noexcept
     return m_device->get_logical_device();
 }
 
-NODISCARD std::shared_ptr<device> instance::get_device() const noexcept {
+NODISCARD VkSurfaceFormatKHR instance::get_surface_format() const noexcept
+{
+    return m_swapchain->get_surface_format();
+}
+
+NODISCARD std::shared_ptr<device> instance::get_device() const noexcept
+{
     return m_device;
 }
- 
 
 } // namespace quix
 

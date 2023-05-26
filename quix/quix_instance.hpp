@@ -24,6 +24,7 @@ public:
 
     NODISCARD GLFWwindow* window() const noexcept;
     NODISCARD VkDevice get_logical_device() const noexcept;
+    NODISCARD VkSurfaceFormatKHR get_surface_format() const noexcept;
 
 private:
     // class device;

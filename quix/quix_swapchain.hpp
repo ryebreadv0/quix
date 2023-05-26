@@ -21,6 +21,8 @@ public:
     swapchain(swapchain&&) = delete;
     swapchain& operator=(swapchain&&) = delete;
 
+    NODISCARD VkSurfaceFormatKHR get_surface_format() const noexcept;
+
 private:
     void create_swapchain();
     void destroy_swapchain();

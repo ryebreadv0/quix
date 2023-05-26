@@ -19,6 +19,12 @@ struct swapchain_support_details {
     std::vector<VkPresentModeKHR> present_modes;
 };
 
+template <typename Type, typename... Args>
+static inline constexpr auto create_auto_array(Args&&... args)
+{
+    return std::array<Type, sizeof...(Args)> { std::forward<Args>(args)... };
+}
+
 
 } // namespace quix
 
