@@ -23,6 +23,7 @@ public:
     void create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
 
     NODISCARD GLFWwindow* window() const noexcept;
+    NODISCARD VkDevice get_logical_device() const noexcept;
 
 private:
     // class device;

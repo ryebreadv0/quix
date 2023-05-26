@@ -40,6 +40,12 @@ instance::window() const noexcept
     return m_device->get_window();
 }
 
+NODISCARD VkDevice
+instance::get_logical_device() const noexcept
+{
+    return m_device->get_logical_device();
+}
+
 NODISCARD std::shared_ptr<device> instance::get_device() const noexcept {
     return m_device;
 }
