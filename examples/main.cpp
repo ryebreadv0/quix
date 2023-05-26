@@ -1,45 +1,46 @@
 #include "quix_instance.hpp"
-#include "quix_shader.hpp"
 #include "quix_pipeline.hpp"
-
-
+#include "quix_shader.hpp"
 
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
 
-
-
 int main()
 {
-    quix::instance instance("quix_example", 
-        VK_MAKE_VERSION(0, 0, 1), 
-        WIDTH, HEIGHT
-    );
+    quix::instance instance("quix_example",
+        VK_MAKE_VERSION(0, 0, 1),
+        WIDTH, HEIGHT);
 
-    instance.create_device( {VK_KHR_SWAPCHAIN_EXTENSION_NAME},
-        {.tessellationShader = VK_TRUE}
-    );
+    instance.create_device({ VK_KHR_SWAPCHAIN_EXTENSION_NAME },
+        { .tessellationShader = VK_TRUE });
 
     instance.create_swapchain(2, VK_PRESENT_MODE_FIFO_KHR);
 
+    auto device = instance.get_logical_device();
+
     quix::graphics::pipeline_info pipeline_info{};
-    // pipeline_info.init_defaults();
 
-    // pipeline_info.allocate_shader_stages(1);
-    // pipeline_info.setup_shader_stage(instance.get_logical_device(), 0, "examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-
-
-    
+    auto shader_stages = quix::graphics::create_shader_stages(
+        quix::graphics::create_shader_stage(device, "examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT)
+    );
 
     
+
+    VkPushConstantRange push_constant_range {
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .offset = 0,
+        .size = sizeof(float) * 4
+    };
+
+    auto pipeline_layout = quix::graphics::create_pipeline_layout_info(
+        nullptr, 0, &push_constant_range, 1);
+
+
     auto* window = instance.window();
 
-    while (glfwWindowShouldClose(window) == GLFW_FALSE)
-    {
+    while (glfwWindowShouldClose(window) == GLFW_FALSE) {
         glfwPollEvents();
     }
 
-
-        
     return 0;
 }

@@ -54,8 +54,6 @@ shader::shader(const char* path, EShLanguage stage)
     compileShader(stage, path, cSpvPath);
 }
 
-shader::~shader() = default;
-
 std::vector<uint32_t> shader::getSpirvCode()
 {
     return code;

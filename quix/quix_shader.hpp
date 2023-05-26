@@ -6,7 +6,6 @@ namespace quix {
 class shader {
 public:
     shader(const char* path, EShLanguage stage);
-    ~shader();
 
     shader(const shader&) = delete;
     shader& operator=(const shader&) = delete;
