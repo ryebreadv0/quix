@@ -4,6 +4,7 @@
 #include "quix_instance.hpp"
 
 #include "quix_common.hpp"
+#include "quix_descriptor.hpp"
 #include "quix_device.hpp"
 #include "quix_swapchain.hpp"
 
@@ -19,14 +20,17 @@ instance::instance(const char* app_name,
         VK_MAKE_VERSION(1, 0, 0),
         width,
         height))
-{
-}
+{}
 
 instance::~instance() = default;
 
 void instance::create_device(std::vector<const char*>&& requested_extensions, VkPhysicalDeviceFeatures requested_features)
 {
     m_device->init(std::move(requested_extensions), requested_features);
+
+    m_descriptor_allocator.reset(descriptor::allocator::init(m_device->get_logical_device()));
+    m_descriptor_layout_cache.reset(new descriptor::layout_cache);
+    m_descriptor_layout_cache->init(m_device->get_logical_device());
 }
 
 void instance::create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
@@ -49,6 +53,16 @@ instance::get_logical_device() const noexcept
 NODISCARD VkSurfaceFormatKHR instance::get_surface_format() const noexcept
 {
     return m_swapchain->get_surface_format();
+}
+
+NODISCARD descriptor::allocator_pool instance::get_descriptor_allocator_pool() const noexcept
+{
+    return m_descriptor_allocator->getPool();
+}
+
+NODISCARD descriptor::builder instance::get_descriptor_builder(descriptor::allocator_pool* allocator_pool) const noexcept
+{
+    return descriptor::builder::begin(m_descriptor_layout_cache.get(), allocator_pool);
 }
 
 NODISCARD std::shared_ptr<device> instance::get_device() const noexcept

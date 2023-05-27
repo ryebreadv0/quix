@@ -205,12 +205,11 @@ void shader::compileShader(EShLanguage stage, const char* path, const char* cSpv
 
     bool validationResult = core.Validate(code);
     if (validationResult != true) {
-        
+
         spdlog::error("Error in {}", path);
 
         throw std::runtime_error("failed to validate shader!");
     }
-
 
     // save the spv code to a file
     saveSpvCode(cSpvPath);

@@ -1,4 +1,4 @@
-#include "quix_common.hpp"
+#include "quix_descriptor.hpp"
 #include "quix_instance.hpp"
 #include "quix_pipeline.hpp"
 
@@ -39,15 +39,21 @@ int main()
     };
 
     quix::graphics::pipeline_builder pipeline_builder(device);
-    
+
     auto shader_stages = pipeline_builder.create_shader_array(
         pipeline_builder.create_shader_stage("examples/simpleshader.vert", VK_SHADER_STAGE_VERTEX_BIT),
         pipeline_builder.create_shader_stage("examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
-    
+
+    auto allocator_pool = instance.get_descriptor_allocator_pool();
+    auto descriptor_set_builder = instance.get_descriptor_builder(&allocator_pool);
+    descriptor_set_builder.bind_buffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+    auto descriptor_set_layout = descriptor_set_builder.buildLayout();
+
     auto pipeline = pipeline_builder.add_shader_stages(shader_stages)
-                        .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float)*4)
-                        .add_renderpass_info(renderpass_info.create_renderpass_info())
-                        .create_graphics_pipeline();
+        .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
+        .add_descriptor_set_layout(descriptor_set_layout)
+        .add_renderpass_info(renderpass_info.create_renderpass_info())
+        .create_graphics_pipeline();
 
     auto* window = instance.window();
 

@@ -11,7 +11,6 @@ public:
     shader& operator=(const shader&) = delete;
     shader(shader&&) = delete;
     shader& operator=(shader&&) = delete;
-    
 
     static void setShaderVersion(uint32_t apiVersion);
 

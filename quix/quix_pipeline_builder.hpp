@@ -28,7 +28,7 @@ namespace graphics {
 
     class pipeline_builder {
     public:
-        constexpr pipeline_builder(VkDevice device)
+        pipeline_builder(VkDevice device)
             : device(device)
         {
             pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -72,7 +72,7 @@ namespace graphics {
         VkRenderPassCreateInfo m_renderpass_info{};
         VkGraphicsPipelineCreateInfo pipeline_create_info {};
 
-        inline constexpr void init_pipeline_defaults()
+        inline  void init_pipeline_defaults()
         {
             create_vertex_state(nullptr, 0, nullptr, 0);
             create_input_assembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
@@ -85,9 +85,8 @@ namespace graphics {
             create_dynamic_state(dynamic_states_default.data(), dynamic_states_default.size());
         }
 
-        inline constexpr void create_pipeline_layout_info()
+        inline void create_pipeline_layout_info()
         {
-            
             m_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             m_layout_info.pNext = nullptr;
             m_layout_info.flags = 0;
@@ -95,11 +94,10 @@ namespace graphics {
             m_layout_info.pSetLayouts = info.descriptor_set_layouts.data();
             // count is set by add_push_constant
             m_layout_info.pPushConstantRanges = &info.push_constant_range;
-
         }
 
     public:
-        inline constexpr pipeline_builder& add_shader_stages(
+        inline pipeline_builder& add_shader_stages(
             VkPipelineShaderStageCreateInfo* stages, const uint32_t stage_count)
         {
             pipeline_create_info.stageCount = stage_count;
@@ -108,7 +106,7 @@ namespace graphics {
             return *this;
         }
         template <std::size_t stage_count>
-        inline constexpr pipeline_builder& add_shader_stages(
+        inline pipeline_builder& add_shader_stages(
             std::array<VkPipelineShaderStageCreateInfo, stage_count>& stages)
         {
             pipeline_create_info.stageCount = stage_count;
@@ -117,7 +115,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& create_vertex_state(
+        inline pipeline_builder& create_vertex_state(
             const VkVertexInputBindingDescription* bindings, const uint32_t binding_count,
             const VkVertexInputAttributeDescription* attributes, const uint32_t arribute_count)
         {
@@ -136,7 +134,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& create_input_assembly(VkPrimitiveTopology topology)
+        inline pipeline_builder& create_input_assembly(VkPrimitiveTopology topology)
         {
             info.input_assembly_state = VkPipelineInputAssemblyStateCreateInfo {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -151,7 +149,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& create_dynamic_state(
+        inline pipeline_builder& create_dynamic_state(
             const VkDynamicState* states, const uint32_t state_count)
         {
             info.dynamic_state = VkPipelineDynamicStateCreateInfo {
@@ -167,7 +165,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& create_viewport_state(
+        inline pipeline_builder& create_viewport_state(
             const VkViewport* viewports, const uint32_t viewport_count,
             const VkRect2D* scissors, const uint32_t scissor_count)
         {
@@ -186,7 +184,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& create_rasterization_state(
+        inline pipeline_builder& create_rasterization_state(
             const VkPolygonMode polygon_mode, const VkCullModeFlags cull_mode, const VkFrontFace front_face)
         {
             info.rasterization_state = VkPipelineRasterizationStateCreateInfo {
@@ -210,7 +208,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& create_multisample_state(
+        inline pipeline_builder& create_multisample_state(
             const VkSampleCountFlagBits sample_count)
         {
             info.multisample_state = VkPipelineMultisampleStateCreateInfo {
@@ -230,7 +228,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& create_depth_stencil_state(
+        inline pipeline_builder& create_depth_stencil_state(
             const VkBool32 depth_test, const VkBool32 depth_write, const VkCompareOp depth_compare_op)
         {
             info.depth_stencil_state = VkPipelineDepthStencilStateCreateInfo {
@@ -253,7 +251,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& create_color_blend_attachment_state(
+        inline pipeline_builder& create_color_blend_attachment_state(
             const VkBool32 blend_enable, const VkBlendFactor src_blend_factor,
             const VkBlendFactor dst_blend_factor, const VkBlendOp color_blend_op,
             const VkColorComponentFlags color_write_mask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)
@@ -274,7 +272,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& create_color_blend_attachment_state(
+        inline pipeline_builder& create_color_blend_attachment_state(
             const VkBool32 blend_enable, const VkBlendFactor src_color_blend_factor,
             const VkBlendFactor dst_color_blend_factor, const VkBlendOp color_blend_op,
             const VkBlendFactor src_alpha_blend_factor, const VkBlendFactor dst_alpha_blend_factor,
@@ -296,7 +294,7 @@ namespace graphics {
 
         static constexpr float blend_constants_default[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-        inline constexpr pipeline_builder& create_color_blend_state(
+        inline pipeline_builder& create_color_blend_state(
             const VkBool32 logic_op_enable, const VkLogicOp logic_op,
             const VkPipelineColorBlendAttachmentState* attachments, const uint32_t attachment_count,
             const float blend_constants[4])
@@ -317,7 +315,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& create_color_blend_state(
+        inline pipeline_builder& create_color_blend_state(
             const VkBool32 logic_op_enable, const VkLogicOp logic_op,
             const VkPipelineColorBlendAttachmentState* attachments, const uint32_t attachment_count)
         {
@@ -337,7 +335,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& create_tesselation_state(
+        inline pipeline_builder& create_tesselation_state(
             const uint32_t control_points)
         {
             info.tessellation_state = VkPipelineTessellationStateCreateInfo {
@@ -352,7 +350,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& add_push_constant(VkShaderStageFlags shader_flags, uint32_t size) noexcept
+        inline pipeline_builder& add_push_constant(VkShaderStageFlags shader_flags, uint32_t size) noexcept
         {
             info.push_constant_range = VkPushConstantRange {
                 .stageFlags = shader_flags,
@@ -364,7 +362,7 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& add_descriptor_set_layout(VkDescriptorSetLayout layout) noexcept
+        inline pipeline_builder& add_descriptor_set_layout(VkDescriptorSetLayout layout) noexcept
         {
             if (info.descriptor_set_layout_count >= 3)
             {
@@ -378,7 +376,26 @@ namespace graphics {
             return *this;
         }
 
-        inline constexpr pipeline_builder& add_renderpass_info(VkRenderPassCreateInfo&& renderpass_info)
+        inline pipeline_builder& add_descriptor_set_layout(std::initializer_list<VkDescriptorSetLayout> layouts) noexcept
+        {
+            
+            for (auto& layout : layouts)
+            {
+                if (info.descriptor_set_layout_count >= 3)
+                {
+                    spdlog::error("descriptor set layout count exceeded, max is 4");
+                    return *this;
+                }
+
+                info.descriptor_set_layouts[info.descriptor_set_layout_count] = layout;
+                ++info.descriptor_set_layout_count;
+            }
+            
+
+            return *this;
+        }
+
+        inline pipeline_builder& add_renderpass_info(VkRenderPassCreateInfo&& renderpass_info)
         {
             m_renderpass_info = renderpass_info;
 
@@ -394,6 +411,27 @@ namespace graphics {
         static constexpr std::array<VkDynamicState, 2> dynamic_states_default = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
     }; // class pipeline_builder
+
+    template <std::size_t Attachments, std::size_t Subpasses, std::size_t Dependencies>
+    struct renderpass_info {
+        VkAttachmentDescription attachments[Attachments];
+        VkAttachmentReference attachments_references[Attachments];
+        VkSubpassDescription subpasses[Subpasses];
+        VkSubpassDependency subpass_dependencies[Dependencies];
+
+        NODISCARD VkRenderPassCreateInfo create_renderpass_info() const noexcept
+        {
+            return VkRenderPassCreateInfo {
+                .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+                .attachmentCount = Attachments,
+                .pAttachments = attachments,
+                .subpassCount = Subpasses,
+                .pSubpasses = subpasses,
+                .dependencyCount = Dependencies,
+                .pDependencies = subpass_dependencies
+            };
+        }
+    };
 
 } // namespace graphics
 

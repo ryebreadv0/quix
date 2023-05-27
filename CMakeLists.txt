@@ -13,6 +13,7 @@ add_library(${PROJECT_NAME}
     quix/quix_swapchain.cpp
     quix/quix_shader.cpp
     quix/quix_pipeline.cpp
+    quix/quix_descriptor.cpp
 )
 
 target_precompile_headers(${PROJECT_NAME} 

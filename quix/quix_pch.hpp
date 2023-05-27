@@ -16,6 +16,7 @@
 
 #include <optional>
 #include <vector>
+#include <deque>
 #include <map>
 #include <set>
 #include <string>
