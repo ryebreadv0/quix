@@ -5,6 +5,11 @@ namespace quix {
 
 class device;
 class swapchain;
+class render_target;
+
+namespace graphics {
+    class pipeline_manager;
+}
 
 namespace descriptor {
     class allocator;
@@ -26,10 +31,14 @@ public:
 
     void create_device(std::vector<const char*>&& requested_extensions, VkPhysicalDeviceFeatures requested_features);
     void create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
+    void create_pipeline_manager();
+    NODISCARD std::shared_ptr<render_target> create_render_target(const VkRenderPassCreateInfo&& renderpass_create_info) const noexcept;
 
     NODISCARD GLFWwindow* window() const noexcept;
     NODISCARD VkDevice get_logical_device() const noexcept;
     NODISCARD VkSurfaceFormatKHR get_surface_format() const noexcept;
+
+    NODISCARD std::shared_ptr<graphics::pipeline_manager> get_pipeline_manager() const noexcept;
 
     NODISCARD descriptor::allocator_pool get_descriptor_allocator_pool() const noexcept; 
     NODISCARD descriptor::builder get_descriptor_builder(descriptor::allocator_pool* allocator_pool) const noexcept;
@@ -43,6 +52,7 @@ private:
 
     std::shared_ptr<device> m_device = nullptr;
     std::shared_ptr<swapchain> m_swapchain = nullptr;
+    std::shared_ptr<graphics::pipeline_manager> m_pipeline_manager = nullptr;
     
     std::unique_ptr<descriptor::allocator> m_descriptor_allocator = nullptr;
     std::unique_ptr<descriptor::layout_cache> m_descriptor_layout_cache = nullptr;

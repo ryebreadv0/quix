@@ -14,6 +14,7 @@ add_library(${PROJECT_NAME}
     quix/quix_shader.cpp
     quix/quix_pipeline.cpp
     quix/quix_descriptor.cpp
+    quix/quix_render_target.cpp
 )
 
 target_precompile_headers(${PROJECT_NAME} 

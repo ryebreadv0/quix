@@ -31,11 +31,6 @@ swapchain::~swapchain()
     m_logger.trace("Destroyed swapchain class");
 }
 
-NODISCARD VkSurfaceFormatKHR swapchain::get_surface_format() const noexcept
-{
-    return m_swapchain_surface_format;
-}
-
 void swapchain::create_swapchain()
 {
     swapchain_support_details swapchain_support = m_device->query_swapchain_support(m_device->get_physical_device());

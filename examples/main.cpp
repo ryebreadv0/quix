@@ -1,6 +1,7 @@
 #include "quix_descriptor.hpp"
 #include "quix_instance.hpp"
 #include "quix_pipeline.hpp"
+#include "quix_render_target.hpp"
 
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
@@ -16,9 +17,9 @@ int main()
 
     instance.create_swapchain(2, VK_PRESENT_MODE_FIFO_KHR);
 
-    auto device = instance.get_logical_device();
+    instance.create_pipeline_manager();
 
-    quix::graphics::renderpass_info<1, 1, 0> renderpass_info = {
+    quix::renderpass_info<1, 1, 0> renderpass_info = {
         { VkAttachmentDescription {
             .format = instance.get_surface_format().format,
             .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -38,7 +39,10 @@ int main()
         {}
     };
 
-    quix::graphics::pipeline_builder pipeline_builder(device);
+    auto render_target = instance.create_render_target(renderpass_info.create_renderpass_info());
+
+    auto pipeline_manager = instance.get_pipeline_manager();
+    quix::graphics::pipeline_builder pipeline_builder = pipeline_manager->create_pipeline_builder(render_target);
 
     auto shader_stages = pipeline_builder.create_shader_array(
         pipeline_builder.create_shader_stage("examples/simpleshader.vert", VK_SHADER_STAGE_VERTEX_BIT),
@@ -46,13 +50,13 @@ int main()
 
     auto allocator_pool = instance.get_descriptor_allocator_pool();
     auto descriptor_set_builder = instance.get_descriptor_builder(&allocator_pool);
-    descriptor_set_builder.bind_buffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-    auto descriptor_set_layout = descriptor_set_builder.buildLayout();
+    auto descriptor_set_layout = descriptor_set_builder
+        .bind_buffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+        .buildLayout();
 
     auto pipeline = pipeline_builder.add_shader_stages(shader_stages)
         .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
         .add_descriptor_set_layout(descriptor_set_layout)
-        .add_renderpass_info(renderpass_info.create_renderpass_info())
         .create_graphics_pipeline();
 
     auto* window = instance.window();

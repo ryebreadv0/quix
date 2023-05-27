@@ -1,12 +1,14 @@
 namespace quix {
 
+class device;
+class render_target;
+
 namespace graphics {
 
     class pipeline {
-    public:
-        pipeline(VkDevice device, const VkPipelineLayoutCreateInfo* pipeline_layout_info,
-            const VkRenderPassCreateInfo* renderpass_info, VkGraphicsPipelineCreateInfo* pipeline_create_info);
+        friend class pipeline_builder;
 
+    public:
         ~pipeline();
 
         pipeline(const pipeline&) = delete;
@@ -15,21 +17,39 @@ namespace graphics {
         pipeline& operator=(pipeline&&) = delete;
 
     private:
-        VkDevice m_device;
+        pipeline(std::shared_ptr<device> device,
+            std::shared_ptr<render_target> render_target,
+            const VkPipelineLayoutCreateInfo* pipeline_layout_info,
+            VkGraphicsPipelineCreateInfo* pipeline_create_info);
 
-        VkPipeline m_pipeline;
+        std::shared_ptr<device> m_device;
+        std::shared_ptr<render_target> m_render_target;
+
         VkPipelineLayout m_pipeline_layout;
-        VkRenderPass m_render_pass;
+        VkPipeline m_pipeline;
 
-        void create_pipeline_layout(VkDevice device, const VkPipelineLayoutCreateInfo* pipeline_layout_info);
-        void create_renderpass(VkDevice device, const VkRenderPassCreateInfo* renderpass_info);
-        void create_pipeline(VkDevice device, VkGraphicsPipelineCreateInfo* pipeline_create_info);
+        void create_pipeline_layout(const VkPipelineLayoutCreateInfo* pipeline_layout_info);
+        void create_pipeline(VkGraphicsPipelineCreateInfo* pipeline_create_info);
     };
 
     class pipeline_builder {
+        friend class pipeline_manager;
+
     public:
-        pipeline_builder(VkDevice device)
-            : device(device)
+        NODISCARD VkPipelineShaderStageCreateInfo create_shader_stage(
+            const char* file_path, const VkShaderStageFlagBits shader_stage);
+
+        NODISCARD pipeline create_graphics_pipeline()
+        {
+            create_pipeline_layout_info();
+
+            return pipeline { m_device, m_render_target, &m_layout_info, &pipeline_create_info };
+        }
+
+    private:
+        pipeline_builder(std::shared_ptr<device> s_device, std::shared_ptr<render_target> s_render_target)
+            : m_device(s_device)
+            , m_render_target(s_render_target)
         {
             pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             pipeline_create_info.basePipelineHandle = nullptr;
@@ -38,17 +58,6 @@ namespace graphics {
             init_pipeline_defaults();
         }
 
-        NODISCARD VkPipelineShaderStageCreateInfo create_shader_stage(
-            const char* file_path, const VkShaderStageFlagBits shader_stage);
-
-        NODISCARD pipeline create_graphics_pipeline()
-        {
-            create_pipeline_layout_info();
-
-            return pipeline { device, &m_layout_info, &m_renderpass_info, &pipeline_create_info };
-        }
-
-    private:
         struct pipeline_info {
             VkPipelineVertexInputStateCreateInfo vertex_input_state;
             VkPipelineInputAssemblyStateCreateInfo input_assembly_state;
@@ -61,18 +70,19 @@ namespace graphics {
             VkPipelineColorBlendStateCreateInfo color_blend_state;
             VkPipelineDynamicStateCreateInfo dynamic_state;
 
-            VkPushConstantRange push_constant_range{};
-            std::array<VkDescriptorSetLayout, 4> descriptor_set_layouts{};
-            uint32_t descriptor_set_layout_count{};
+            VkPushConstantRange push_constant_range {};
+            std::array<VkDescriptorSetLayout, 4> descriptor_set_layouts {};
+            uint32_t descriptor_set_layout_count {};
         };
 
-        VkDevice device;
+        std::shared_ptr<device> m_device;
+        std::shared_ptr<render_target> m_render_target;
+
         pipeline_info info;
-        VkPipelineLayoutCreateInfo m_layout_info{};
-        VkRenderPassCreateInfo m_renderpass_info{};
+        VkPipelineLayoutCreateInfo m_layout_info {};
         VkGraphicsPipelineCreateInfo pipeline_create_info {};
 
-        inline  void init_pipeline_defaults()
+        inline void init_pipeline_defaults()
         {
             create_vertex_state(nullptr, 0, nullptr, 0);
             create_input_assembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
@@ -364,8 +374,7 @@ namespace graphics {
 
         inline pipeline_builder& add_descriptor_set_layout(VkDescriptorSetLayout layout) noexcept
         {
-            if (info.descriptor_set_layout_count >= 3)
-            {
+            if (info.descriptor_set_layout_count >= 3) {
                 spdlog::error("descriptor set layout count exceeded, max is 4");
                 return *this;
             }
@@ -378,11 +387,9 @@ namespace graphics {
 
         inline pipeline_builder& add_descriptor_set_layout(std::initializer_list<VkDescriptorSetLayout> layouts) noexcept
         {
-            
-            for (auto& layout : layouts)
-            {
-                if (info.descriptor_set_layout_count >= 3)
-                {
+
+            for (auto& layout : layouts) {
+                if (info.descriptor_set_layout_count >= 3) {
                     spdlog::error("descriptor set layout count exceeded, max is 4");
                     return *this;
                 }
@@ -390,14 +397,6 @@ namespace graphics {
                 info.descriptor_set_layouts[info.descriptor_set_layout_count] = layout;
                 ++info.descriptor_set_layout_count;
             }
-            
-
-            return *this;
-        }
-
-        inline pipeline_builder& add_renderpass_info(VkRenderPassCreateInfo&& renderpass_info)
-        {
-            m_renderpass_info = renderpass_info;
 
             return *this;
         }
@@ -411,27 +410,6 @@ namespace graphics {
         static constexpr std::array<VkDynamicState, 2> dynamic_states_default = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
     }; // class pipeline_builder
-
-    template <std::size_t Attachments, std::size_t Subpasses, std::size_t Dependencies>
-    struct renderpass_info {
-        VkAttachmentDescription attachments[Attachments];
-        VkAttachmentReference attachments_references[Attachments];
-        VkSubpassDescription subpasses[Subpasses];
-        VkSubpassDependency subpass_dependencies[Dependencies];
-
-        NODISCARD VkRenderPassCreateInfo create_renderpass_info() const noexcept
-        {
-            return VkRenderPassCreateInfo {
-                .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-                .attachmentCount = Attachments,
-                .pAttachments = attachments,
-                .subpassCount = Subpasses,
-                .pSubpasses = subpasses,
-                .dependencyCount = Dependencies,
-                .pDependencies = subpass_dependencies
-            };
-        }
-    };
 
 } // namespace graphics
 

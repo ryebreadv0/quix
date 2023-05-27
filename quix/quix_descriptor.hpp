@@ -65,37 +65,38 @@ namespace descriptor {
         // unordered map is sychronized
         VkDescriptorSetLayout create_descriptor_layout(VkDescriptorSetLayoutCreateInfo* info);
 
-        struct DescriptorLayoutInfo {
+        struct descriptor_layout_info {
             // good idea to turn this into an inlined array
             std::vector<VkDescriptorSetLayoutBinding> bindings;
 
-            bool operator==(const DescriptorLayoutInfo& other) const;
+            bool operator==(const descriptor_layout_info& other) const;
 
             size_t hash() const;
         };
 
     private:
-        struct DescriptorLayoutHash {
-            std::size_t operator()(const DescriptorLayoutInfo& k) const
+        struct descriptor_layout_hash {
+            std::size_t operator()(const descriptor_layout_info& k) const
             {
                 return k.hash();
             }
         };
 
         std::mutex layoutCacheMutex;
-        std::unordered_map<DescriptorLayoutInfo, VkDescriptorSetLayout, DescriptorLayoutHash> layoutCache;
+        std::unordered_map<descriptor_layout_info, VkDescriptorSetLayout, descriptor_layout_hash> layoutCache;
         VkDevice device;
     };
 
     class builder {
     public:
-        static builder begin(layout_cache* layoutCache, allocator_pool* pool);
+        // static builder begin(layout_cache* layoutCache, allocator_pool* pool);
+        builder(layout_cache* layoutCache, allocator_pool* pool);
 
-        void bind_buffer(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stageFlags);
-        void bind_image(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stageFlags);
+        builder& bind_buffer(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stageFlags);
+        builder& bind_image(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stageFlags);
 
-        void update_buffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo);
-        void update_image(uint32_t binding, VkDescriptorImageInfo* imageInfo);
+        builder& update_buffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo);
+        builder& update_image(uint32_t binding, VkDescriptorImageInfo* imageInfo);
 
         VkDescriptorSetLayout buildLayout();
 

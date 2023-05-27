@@ -5,6 +5,7 @@
 
 #include "quix_device.hpp"
 #include "quix_instance.hpp"
+#include "quix_render_target.hpp"
 #include "quix_shader.hpp"
 
 namespace quix {
@@ -25,6 +26,7 @@ namespace graphics {
 
     } // namespace defaults
 
+    // pipeline_builder class
     VkPipelineShaderStageCreateInfo pipeline_builder::create_shader_stage(
         const char* file_path, const VkShaderStageFlagBits shader_stage)
     {
@@ -53,7 +55,7 @@ namespace graphics {
         }
 
         shader shader_obj(file_path, EShStage);
-        VkShaderModule shader_module = shader_obj.createShaderModule(device);
+        VkShaderModule shader_module = shader_obj.createShaderModule(m_device->get_logical_device());
 
         return VkPipelineShaderStageCreateInfo {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -66,60 +68,71 @@ namespace graphics {
         };
     }
 
-    pipeline::pipeline(VkDevice device, const VkPipelineLayoutCreateInfo* pipeline_layout_info,
-        const VkRenderPassCreateInfo* renderpass_info, VkGraphicsPipelineCreateInfo* pipeline_create_info)
+    // pipeline_builder end
+
+    // pipeline class
+
+    pipeline::pipeline(std::shared_ptr<device> device,
+        std::shared_ptr<render_target> render_target,
+        const VkPipelineLayoutCreateInfo* pipeline_layout_info,
+        VkGraphicsPipelineCreateInfo* pipeline_create_info)
         : m_device(device)
+        , m_render_target(render_target)
     {
-        create_pipeline_layout(device, pipeline_layout_info);
-        create_renderpass(device, renderpass_info);
-        create_pipeline(device, pipeline_create_info);
+        create_pipeline_layout(pipeline_layout_info);
+        create_pipeline(pipeline_create_info);
         for (int i = 0; i < pipeline_create_info->stageCount; i++) {
-            vkDestroyShaderModule(device, pipeline_create_info->pStages[i].module, nullptr);
+            vkDestroyShaderModule(m_device->get_logical_device(), pipeline_create_info->pStages[i].module, nullptr);
         }
     }
 
     pipeline::~pipeline()
     {
-        vkDestroyPipelineLayout(m_device, m_pipeline_layout, nullptr);
-        vkDestroyRenderPass(m_device, m_render_pass, nullptr);
-        vkDestroyPipeline(m_device, m_pipeline, nullptr);
+        vkDestroyPipelineLayout(m_device->get_logical_device(), m_pipeline_layout, nullptr);
+        vkDestroyPipeline(m_device->get_logical_device(), m_pipeline, nullptr);
     }
 
-    void pipeline::create_pipeline_layout(VkDevice device, const VkPipelineLayoutCreateInfo* pipeline_layout_info)
+    void pipeline::create_pipeline_layout(const VkPipelineLayoutCreateInfo* pipeline_layout_info)
     {
         if (pipeline_layout_info == nullptr) {
             pipeline_layout_info = &defaults::layout_create_info;
         }
 
-        if (vkCreatePipelineLayout(device, pipeline_layout_info, nullptr, &m_pipeline_layout) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(m_device->get_logical_device(), pipeline_layout_info, nullptr, &m_pipeline_layout) != VK_SUCCESS) {
             spdlog::error("failed to create pipeline layout!");
             throw std::runtime_error("failed to create pipeline layout!");
         }
     }
 
-    void pipeline::create_renderpass(VkDevice device, const VkRenderPassCreateInfo* renderpass_info)
-    {
-
-        if (vkCreateRenderPass(device, renderpass_info, nullptr, &m_render_pass) != VK_SUCCESS) {
-            spdlog::error("failed to create render pass!");
-            throw std::runtime_error("failed to create render pass!");
-        }
-    }
-
-    void pipeline::create_pipeline(VkDevice device, VkGraphicsPipelineCreateInfo* pipeline_create_info)
+    void pipeline::create_pipeline(VkGraphicsPipelineCreateInfo* pipeline_create_info)
     {
         pipeline_create_info->layout = m_pipeline_layout;
-        pipeline_create_info->renderPass = m_render_pass;
+        pipeline_create_info->renderPass = m_render_target->get_render_pass();
 
-        if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, pipeline_create_info, nullptr, &m_pipeline) != VK_SUCCESS) {
+        if (vkCreateGraphicsPipelines(m_device->get_logical_device(), VK_NULL_HANDLE, 1, pipeline_create_info, nullptr, &m_pipeline) != VK_SUCCESS) {
             spdlog::error("failed to create graphics pipeline!");
             throw std::runtime_error("failed to create graphics pipeline!");
         }
     }
+
+    // pipeline class end
+
+    // pipeline_manager class
+
+    pipeline_manager::pipeline_manager(std::shared_ptr<device> device)
+        : m_device(device)
+    {
+    }
+
+    pipeline_builder pipeline_manager::create_pipeline_builder(std::shared_ptr<render_target> render_target)
+    {
+        return pipeline_builder { m_device, render_target };
+    }
+
+    // pipeline_manager class end
 
 } // namespace graphics
 
 } // namespace quix
 
 #endif // _QUIX_PIPELINE_CPP
-

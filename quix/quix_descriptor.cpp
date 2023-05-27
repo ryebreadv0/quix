@@ -199,7 +199,7 @@ namespace descriptor {
 
     VkDescriptorSetLayout layout_cache::create_descriptor_layout(VkDescriptorSetLayoutCreateInfo* info)
     {
-        DescriptorLayoutInfo layoutinfo;
+        descriptor_layout_info layoutinfo;
         layoutinfo.bindings.reserve(info->bindingCount);
         bool isSorted = true;
         int lastBinding = -1;
@@ -240,7 +240,7 @@ namespace descriptor {
         }
     }
 
-    bool layout_cache::DescriptorLayoutInfo::operator==(const DescriptorLayoutInfo& other) const
+    bool layout_cache::descriptor_layout_info::operator==(const descriptor_layout_info& other) const
     {
         if (other.bindings.size() != bindings.size()) {
             return false;
@@ -264,7 +264,7 @@ namespace descriptor {
         }
     }
 
-    size_t layout_cache::DescriptorLayoutInfo::hash() const
+    size_t layout_cache::descriptor_layout_info::hash() const
     {
         using std::hash;
         using std::size_t;
@@ -286,17 +286,13 @@ namespace descriptor {
 
     // builder class start
 
-    builder builder::begin(layout_cache* layoutCache, allocator_pool* pool)
+    builder::builder(layout_cache* layoutCache, allocator_pool* pool)
+        : cache(layoutCache)
+        , alloc(pool)
     {
-
-        builder builder;
-
-        builder.cache = layoutCache;
-        builder.alloc = pool;
-        return builder;
     }
 
-    void builder::bind_buffer(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stageFlags)
+    builder& builder::bind_buffer(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stageFlags)
     {
         // create the descriptor binding for the layout
         VkDescriptorSetLayoutBinding newBinding {};
@@ -320,9 +316,11 @@ namespace descriptor {
         newWrite.dstBinding = binding;
 
         writes.push_back(newWrite);
+
+        return *this;
     }
 
-    void builder::bind_image(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stageFlags)
+    builder& builder::bind_image(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stageFlags)
     {
         // create the descriptor binding for the layout
         VkDescriptorSetLayoutBinding newBinding {};
@@ -346,16 +344,22 @@ namespace descriptor {
         newWrite.dstBinding = binding;
 
         writes.push_back(newWrite);
+
+        return *this;
     }
 
-    void builder::update_buffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo)
+    builder& builder::update_buffer(uint32_t binding, VkDescriptorBufferInfo* bufferInfo)
     {
         writes[binding].pBufferInfo = bufferInfo;
+
+        return *this;
     }
 
-    void builder::update_image(uint32_t binding, VkDescriptorImageInfo* imageInfo)
+    builder& builder::update_image(uint32_t binding, VkDescriptorImageInfo* imageInfo)
     {
         writes[binding].pImageInfo = imageInfo;
+
+        return *this;
     }
 
     VkDescriptorSetLayout builder::buildLayout()

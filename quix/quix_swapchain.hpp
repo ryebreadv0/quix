@@ -1,8 +1,6 @@
 #ifndef _QUIX_SWAPCHAIN_HPP
 #define _QUIX_SWAPCHAIN_HPP
 
-// #include "quix_instance.hpp"
-
 namespace quix {
 
 class device;
@@ -21,7 +19,10 @@ public:
     swapchain(swapchain&&) = delete;
     swapchain& operator=(swapchain&&) = delete;
 
-    NODISCARD VkSurfaceFormatKHR get_surface_format() const noexcept;
+    NODISCARD inline const int32_t get_frames_in_flight() const noexcept { return m_frames_in_flight; }
+    NODISCARD inline const VkSurfaceFormatKHR get_surface_format() const noexcept { return m_swapchain_surface_format; }
+    NODISCARD inline const VkExtent2D get_extent() const noexcept { return m_swapchain_extent; }
+    NODISCARD inline const std::vector<VkImageView>& get_image_views() const noexcept { return m_swapchain_image_views; }
 
 private:
     void create_swapchain();
