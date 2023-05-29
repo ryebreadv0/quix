@@ -2,6 +2,7 @@
 #include "quix_instance.hpp"
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"
+#include "quix_command_list.hpp"
 
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
@@ -16,8 +17,6 @@ int main()
         { .tessellationShader = VK_TRUE });
 
     instance.create_swapchain(2, VK_PRESENT_MODE_FIFO_KHR);
-
-    instance.create_pipeline_manager();
 
     quix::renderpass_info<1, 1, 0> renderpass_info = {
         { VkAttachmentDescription {
@@ -39,8 +38,9 @@ int main()
         {}
     };
 
-    auto render_target = instance.create_render_target(renderpass_info.create_renderpass_info());
+    auto render_target = instance.create_render_target(renderpass_info.export_renderpass_info());
 
+    instance.create_pipeline_manager();
     auto pipeline_manager = instance.get_pipeline_manager();
     quix::graphics::pipeline_builder pipeline_builder = pipeline_manager->create_pipeline_builder(render_target);
 
@@ -59,6 +59,8 @@ int main()
         .add_descriptor_set_layout(descriptor_set_layout)
         .create_graphics_pipeline();
 
+    auto command_pool = instance.get_command_pool();
+    
     auto* window = instance.window();
 
     while (glfwWindowShouldClose(window) == GLFW_FALSE) {

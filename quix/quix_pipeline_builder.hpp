@@ -402,7 +402,7 @@ namespace graphics {
         }
 
         template <typename... Args>
-        static inline constexpr auto create_shader_array(Args&&... args)
+        NODISCARD static inline constexpr auto create_shader_array(Args&&... args)
         {
             return std::array<VkPipelineShaderStageCreateInfo, sizeof...(Args)> { std::forward<Args>(args)... };
         }

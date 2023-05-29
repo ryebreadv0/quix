@@ -6,9 +6,10 @@
 #include "quix_common.hpp"
 #include "quix_descriptor.hpp"
 #include "quix_device.hpp"
-#include "quix_swapchain.hpp"
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"
+#include "quix_swapchain.hpp"
+#include "quix_command_list.hpp"
 
 namespace quix {
 
@@ -22,7 +23,8 @@ instance::instance(const char* app_name,
         VK_MAKE_VERSION(1, 0, 0),
         width,
         height))
-{}
+{
+}
 
 instance::~instance() = default;
 
@@ -40,9 +42,14 @@ void instance::create_swapchain(const int32_t frames_in_flight, const VkPresentM
     m_swapchain = std::make_shared<swapchain>(m_device, frames_in_flight, present_mode);
 }
 
-void instance::create_pipeline_manager() 
+void instance::create_pipeline_manager()
 {
     m_pipeline_manager = std::make_shared<graphics::pipeline_manager>(m_device);
+}
+
+NODISCARD std::shared_ptr<command_pool> instance::get_command_pool() const
+{
+    return std::make_shared<command_pool>(m_device, m_device->get_command_pool());
 }
 
 NODISCARD std::shared_ptr<render_target> instance::create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) const noexcept
@@ -72,7 +79,6 @@ NODISCARD std::shared_ptr<graphics::pipeline_manager> instance::get_pipeline_man
     return m_pipeline_manager;
 }
 
-
 NODISCARD descriptor::allocator_pool instance::get_descriptor_allocator_pool() const noexcept
 {
     return m_descriptor_allocator->getPool();
@@ -80,7 +86,7 @@ NODISCARD descriptor::allocator_pool instance::get_descriptor_allocator_pool() c
 
 NODISCARD descriptor::builder instance::get_descriptor_builder(descriptor::allocator_pool* allocator_pool) const noexcept
 {
-    return descriptor::builder{m_descriptor_layout_cache.get(), allocator_pool};
+    return descriptor::builder { m_descriptor_layout_cache.get(), allocator_pool };
 }
 
 NODISCARD std::shared_ptr<device> instance::get_device() const noexcept

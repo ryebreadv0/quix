@@ -15,6 +15,7 @@ add_library(${PROJECT_NAME}
     quix/quix_pipeline.cpp
     quix/quix_descriptor.cpp
     quix/quix_render_target.cpp
+    quix/quix_command_list.cpp
 )
 
 target_precompile_headers(${PROJECT_NAME} 
@@ -32,6 +33,8 @@ CPMAddPackage(
     GIT_TAG 12.2.0
     VERSION 12.2.0
     DOWNLOAD_ONLY True
+    OPTION BUILD_TESTING OFF
+    OPTION ENABLE_CTEST OFF
 )
 
 # execute python program to get glslang externals

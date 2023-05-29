@@ -18,6 +18,7 @@ static glslang::EShTargetLanguageVersion eshTargetLanguageVersion = glslang::ESh
 // shader class
 shader::shader(const char* path, EShLanguage stage)
 {
+    spdlog::trace("Creating shader from {}", path);
 
     if (ends_with(path, ".spv")) {
         loadSpvCode(path);
@@ -52,6 +53,7 @@ shader::shader(const char* path, EShLanguage stage)
         }
     }
     compileShader(stage, path, cSpvPath);
+    spdlog::trace("Shader created from {}", path);
 }
 
 std::vector<uint32_t> shader::getSpirvCode()
@@ -68,6 +70,7 @@ VkShaderModule shader::createShaderModule(VkDevice device)
 
     VkShaderModule shaderModule;
     if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+        spdlog::error("failed to create shader module!");
         throw std::runtime_error("failed to create shader module!");
     }
 
@@ -78,6 +81,7 @@ void shader::loadSpvCode(const char* file)
 {
     FILE* handle = fopen(file, "rb");
     if (handle == nullptr) {
+        spdlog::error("failed to open file!");
         throw std::runtime_error("failed to open file!");
     }
     fseek(handle, 0, SEEK_END);
@@ -93,6 +97,7 @@ void shader::loadSpvCode(const char* file)
 
 void shader::saveSpvCode(const char* file)
 {
+    spdlog::trace("Saving spv code to {}", file);
     FILE* handle = fopen(file, "wb");
     if (handle == nullptr) {
         throw std::runtime_error("failed to open file!");
@@ -107,18 +112,22 @@ void shader::setShaderVersion(uint32_t apiVersion)
 {
     switch (apiVersion) {
     case VK_API_VERSION_1_0:
+        spdlog::trace("Set shader version to 1.0");
         eshTargetClientVersion = glslang::EShTargetVulkan_1_0;
         eshTargetLanguageVersion = glslang::EShTargetSpv_1_0;
         break;
     case VK_API_VERSION_1_1:
+        spdlog::trace("Set shader version to 1.1");
         eshTargetClientVersion = glslang::EShTargetVulkan_1_1;
         eshTargetLanguageVersion = glslang::EShTargetSpv_1_1;
         break;
     case VK_API_VERSION_1_2:
+        spdlog::trace("Set shader version to 1.2");
         eshTargetClientVersion = glslang::EShTargetVulkan_1_2;
         eshTargetLanguageVersion = glslang::EShTargetSpv_1_2;
         break;
     case VK_API_VERSION_1_3:
+        spdlog::trace("Set shader version to 1.3");
         eshTargetClientVersion = glslang::EShTargetVulkan_1_3;
         eshTargetLanguageVersion = glslang::EShTargetSpv_1_3;
         break;
@@ -129,7 +138,7 @@ void shader::setShaderVersion(uint32_t apiVersion)
 
 void shader::compileShader(EShLanguage stage, const char* path, const char* cSpvPath)
 {
-
+    spdlog::trace("Compiling shader {}", path);
     const TBuiltInResource* resources = GetDefaultResources();
 
     glslang::TProgram program;
@@ -158,6 +167,7 @@ void shader::compileShader(EShLanguage stage, const char* path, const char* cSpv
     glslang::GlslangToSpv(*program.getIntermediate(stage), code);
 
     // optimize spirv
+    spdlog::trace("Optimizing spirv code for {}", path);
 
     spvtools::Optimizer optimizer(SPV_ENV_UNIVERSAL_1_3);
     optimizer.SetMessageConsumer([](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message) {
@@ -186,6 +196,7 @@ void shader::compileShader(EShLanguage stage, const char* path, const char* cSpv
         .RegisterPass(spvtools::CreateFoldSpecConstantOpAndCompositePass());
 
     if (!optimizer.Run(code.data(), code.size(), &code)) {
+        spdlog::error("failed to optimize shader!");
         throw std::runtime_error("failed to optimize shader!");
     }
 
@@ -219,8 +230,11 @@ const std::string shader::getSourceCode(const char* path)
 {
     FILE* file = fopen(path, "r");
     if (file == nullptr) {
+        spdlog::error("Failed to open file {}", path);
         throw std::runtime_error("failed to open file!");
     }
+    spdlog::trace("Reading shader {}", path);
+    
     fseek(file, 0, SEEK_END);
     size_t fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);

@@ -18,6 +18,8 @@ namespace descriptor {
     struct allocator_pool;
 }
 
+class command_pool;
+
 class instance {
 public:
 
@@ -39,6 +41,7 @@ public:
     NODISCARD VkSurfaceFormatKHR get_surface_format() const noexcept;
 
     NODISCARD std::shared_ptr<graphics::pipeline_manager> get_pipeline_manager() const noexcept;
+    NODISCARD std::shared_ptr<command_pool> get_command_pool() const;
 
     NODISCARD descriptor::allocator_pool get_descriptor_allocator_pool() const noexcept; 
     NODISCARD descriptor::builder get_descriptor_builder(descriptor::allocator_pool* allocator_pool) const noexcept;

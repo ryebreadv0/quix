@@ -22,6 +22,10 @@ namespace descriptor {
 
     void allocator_pool::returnPool()
     {
+        if (currentPool == VK_NULL_HANDLE) {
+            spdlog::warn("Pool already freed");
+            return;
+        }
         allocator->returnPool(*this);
     }
 

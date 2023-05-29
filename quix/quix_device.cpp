@@ -37,7 +37,6 @@ device::device(const char* app_name,
     create_instance(app_name, app_version, engine_name, engine_version);
 
     create_window(app_name, width, height);
-
 }
 
 device::~device()
@@ -47,6 +46,11 @@ device::~device()
         m_logger.error("device was never initialized");
     }
 #endif
+
+    for (auto& pool : m_command_pools) {
+        vkDestroyCommandPool(m_logical_device, pool, nullptr);
+    }
+    m_logger.trace("command pools destroyed");
 
     vmaDestroyAllocator(m_allocator);
     m_logger.trace("VMA allocator destroyed");
@@ -92,6 +96,46 @@ void device::init(std::vector<const char*>&& requested_extensions, VkPhysicalDev
     create_logical_device();
 
     create_allocator();
+}
+
+NODISCARD VkCommandPool device::get_command_pool()
+{
+    if (m_command_pools.empty()) {
+        m_logger.trace("creating command pool");
+        VkCommandPoolCreateInfo pool_info = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .pNext = nullptr,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            .queueFamilyIndex = m_queue_family_indices->graphics_family.value()
+        };
+
+        VkCommandPool pool;
+        if (vkCreateCommandPool(m_logical_device, &pool_info, nullptr, &pool) != VK_SUCCESS) {
+            m_logger.error("failed to create command pool");
+            throw std::runtime_error("failed to create command pool!");
+        }
+        m_logger.trace("command pool created");
+
+        return pool;
+    }
+
+    std::lock_guard<std::mutex> lock(m_command_pool_mutex);
+    VkCommandPool pool = m_command_pools.front();
+    m_command_pools.pop_front();
+    vkResetCommandPool(m_logical_device, pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
+    m_logger.trace("command pool retrieved");
+
+    return pool;
+}
+
+void device::return_command_pool(VkCommandPool command_pool)
+{
+    {
+        std::lock_guard<std::mutex> lock(m_command_pool_mutex); // TODO determine if it is worth it to releasr resources
+        m_command_pools.push_back(command_pool);
+    }
+    m_logger.trace("command pool returned");
 }
 
 void device::create_instance(const char* app_name,
@@ -518,8 +562,6 @@ void device::create_allocator()
 
     m_logger.trace("created allocator");
 }
-
-
 
 } // namespace quix
 

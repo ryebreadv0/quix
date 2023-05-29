@@ -33,6 +33,14 @@ public:
     NODISCARD inline VkSurfaceKHR get_surface() const noexcept { return m_surface; }
     NODISCARD inline VkDevice get_logical_device() const noexcept { return m_logical_device; }
     NODISCARD inline VmaAllocator get_allocator() const noexcept { return m_allocator; }
+    NODISCARD inline queue_family_indices get_queue_family_indices() const noexcept { return m_queue_family_indices.value(); }
+    NODISCARD inline VkQueue get_graphics_queue() const noexcept { return m_graphics_queue; }
+    NODISCARD inline VkQueue get_present_queue() const noexcept { return m_present_queue; }
+    
+    NODISCARD VkCommandPool get_command_pool();
+    void return_command_pool(VkCommandPool command_pool);
+
+    
 
 private:
     void create_instance(const char* app_name,
@@ -78,6 +86,9 @@ private:
     VkPhysicalDeviceFeatures requested_features{};
 
     std::optional<queue_family_indices> m_queue_family_indices;
+
+    std::deque<VkCommandPool> m_command_pools;
+    std::mutex m_command_pool_mutex;
 };
 
 

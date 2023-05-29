@@ -13,7 +13,7 @@ struct renderpass_info {
     VkSubpassDescription subpasses[Subpasses];
     VkSubpassDependency subpass_dependencies[Dependencies];
 
-    NODISCARD VkRenderPassCreateInfo create_renderpass_info() const noexcept
+    NODISCARD VkRenderPassCreateInfo export_renderpass_info() const noexcept
     {
         return VkRenderPassCreateInfo {
             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,

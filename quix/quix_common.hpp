@@ -20,7 +20,7 @@ struct swapchain_support_details {
 };
 
 template <typename Type, typename... Args>
-static inline constexpr auto create_auto_array(Args&&... args)
+NODISCARD static inline constexpr auto create_auto_array(Args&&... args)
 {
     return std::array<Type, sizeof...(Args)> { std::forward<Args>(args)... };
 }
