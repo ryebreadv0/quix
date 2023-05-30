@@ -75,10 +75,7 @@ void swapchain::create_swapchain()
 
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(m_device->get_logical_device(), &createInfo, nullptr, &m_swapchain) != VK_SUCCESS) {
-        m_logger.error("failed to create swap chain!");
-        throw std::runtime_error("failed to create swap chain!");
-    }
+    VK_CHECK(vkCreateSwapchainKHR(m_device->get_logical_device(), &createInfo, nullptr, &m_swapchain), "failed to create swapchain");
 
     vkGetSwapchainImagesKHR(m_device->get_logical_device(), m_swapchain, &imageCount, nullptr);
     m_swapchain_images.resize(imageCount);
@@ -114,10 +111,7 @@ void swapchain::create_image_views()
     for (int i = 0; i < m_swapchain_images.size(); i++) {
         createInfo.image = m_swapchain_images[i];
 
-        if (vkCreateImageView(m_device->get_logical_device(), &createInfo, nullptr, &m_swapchain_image_views[i]) != VK_SUCCESS) {
-            m_logger.error("failed to create image views!");
-            throw std::runtime_error("failed to create image views!");
-        }
+        VK_CHECK(vkCreateImageView(m_device->get_logical_device(), &createInfo, nullptr, &m_swapchain_image_views[i]), "failed to create image views");
     }
 
     m_logger.trace("created image views");

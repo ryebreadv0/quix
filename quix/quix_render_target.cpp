@@ -50,9 +50,7 @@ NODISCARD VkExtent2D render_target::get_extent() const noexcept
 
 void render_target::create_renderpass(const VkRenderPassCreateInfo* renderpass_info)
 {
-    if (vkCreateRenderPass(m_device->get_logical_device(), renderpass_info, nullptr, &m_render_pass) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create render pass!");
-    }
+    VK_CHECK(vkCreateRenderPass(m_device->get_logical_device(), renderpass_info, nullptr, &m_render_pass), "failed to create renderpass");
 }
 
 void render_target::create_framebuffers()
@@ -75,9 +73,7 @@ void render_target::create_framebuffers()
             .layers = 1
         };
 
-        if (vkCreateFramebuffer(m_device->get_logical_device(), &framebuffer_info, nullptr, &m_framebuffers[i]) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create framebuffer!");
-        }
+        VK_CHECK(vkCreateFramebuffer(m_device->get_logical_device(), &framebuffer_info, nullptr, &m_framebuffers[i]), "failed to create framebuffer");
     }
 }
 

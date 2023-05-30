@@ -17,7 +17,7 @@ public:
     sync(std::shared_ptr<device> s_device, std::shared_ptr<swapchain> s_swapchain);
     ~sync();
 
-    void sync_frame(const int frame);
+    void wait_force_fence(const int frame);
     VkResult acquire_next_image(const int frame, uint32_t* image_index);
     VkResult submit_frame(const int frame, std::shared_ptr<command_list> command);
     VkResult present_frame(const int frame, const uint32_t image_index);

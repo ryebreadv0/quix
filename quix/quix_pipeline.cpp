@@ -51,7 +51,7 @@ namespace graphics {
             EShStage = EShLangCompute;
             break;
         default:
-            throw std::runtime_error("invalid shader stage!");
+            quix_error("invalid shader stage");
         }
 
         shader shader_obj(file_path, EShStage);
@@ -98,10 +98,7 @@ namespace graphics {
             pipeline_layout_info = &defaults::layout_create_info;
         }
 
-        if (vkCreatePipelineLayout(m_device->get_logical_device(), pipeline_layout_info, nullptr, &m_pipeline_layout) != VK_SUCCESS) {
-            spdlog::error("failed to create pipeline layout!");
-            throw std::runtime_error("failed to create pipeline layout!");
-        }
+        VK_CHECK(vkCreatePipelineLayout(m_device->get_logical_device(), pipeline_layout_info, nullptr, &m_pipeline_layout), "failed to create pipeline layout");
     }
 
     void pipeline::create_pipeline(VkGraphicsPipelineCreateInfo* pipeline_create_info)
@@ -109,10 +106,7 @@ namespace graphics {
         pipeline_create_info->layout = m_pipeline_layout;
         pipeline_create_info->renderPass = m_render_target->get_render_pass();
 
-        if (vkCreateGraphicsPipelines(m_device->get_logical_device(), VK_NULL_HANDLE, 1, pipeline_create_info, nullptr, &m_pipeline) != VK_SUCCESS) {
-            spdlog::error("failed to create graphics pipeline!");
-            throw std::runtime_error("failed to create graphics pipeline!");
-        }
+        VK_CHECK(vkCreateGraphicsPipelines(m_device->get_logical_device(), VK_NULL_HANDLE, 1, pipeline_create_info, nullptr, &m_pipeline), "failed to create graphics pipeline");
     }
 
     // pipeline class end

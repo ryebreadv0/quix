@@ -15,7 +15,7 @@ int main()
         WIDTH, HEIGHT);
 
     instance.create_device({ VK_KHR_SWAPCHAIN_EXTENSION_NAME },
-        { .tessellationShader = VK_TRUE });
+        {});
 
     instance.create_swapchain(FRAMES_IN_FLIGHT, VK_PRESENT_MODE_FIFO_KHR);
 
@@ -49,15 +49,15 @@ int main()
         pipeline_builder.create_shader_stage("examples/simpleshader.vert", VK_SHADER_STAGE_VERTEX_BIT),
         pipeline_builder.create_shader_stage("examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
 
-    // auto allocator_pool = instance.get_descriptor_allocator_pool();
-    // auto descriptor_set_builder = instance.get_descriptor_builder(&allocator_pool);
-    // auto descriptor_set_layout = descriptor_set_builder
-    //                                  .bind_buffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-                                    //  .buildLayout();
+    auto allocator_pool = instance.get_descriptor_allocator_pool();
+    auto descriptor_set_builder = instance.get_descriptor_builder(&allocator_pool);
+    auto descriptor_set_layout = descriptor_set_builder
+                                     .bind_buffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+                                     .buildLayout();
 
     auto pipeline = pipeline_builder.add_shader_stages(shader_stages)
-                        // .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
-                        // .add_descriptor_set_layout(descriptor_set_layout)
+                        .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
+                        .add_descriptor_set_layout(descriptor_set_layout)
                         .create_graphics_pipeline();
 
     auto command_pool = instance.get_command_pool();
@@ -80,7 +80,7 @@ int main()
     while (glfwWindowShouldClose(window) == GLFW_FALSE) {
         glfwPollEvents();
 
-        sync_objects->acquire_next_image(current_frame, &current_image_index);
+        VK_CHECK(sync_objects->acquire_next_image(current_frame, &current_image_index), std::format("failed to aqcuire image"));
 
         command_lists[current_frame]->begin_record();
 
@@ -92,9 +92,9 @@ int main()
 
         command_lists[current_frame]->end_record();
 
-        sync_objects->submit_frame(current_frame, command_lists[current_frame]);
+        VK_CHECK(sync_objects->submit_frame(current_frame, command_lists[current_frame]), std::format("failed to submit frame"));
 
-        sync_objects->present_frame(current_frame, current_image_index);
+        VK_CHECK(sync_objects->present_frame(current_frame, current_image_index), std::format("failed to present frame"));
 
         current_frame = (current_frame + 1) % FRAMES_IN_FLIGHT;
     }

@@ -121,6 +121,7 @@ namespace graphics {
 
             return *this;
         }
+
         template <std::size_t stage_count>
         inline pipeline_builder& add_shader_stages(
             std::array<VkPipelineShaderStageCreateInfo, stage_count>& stages)

@@ -23,7 +23,7 @@ sync::~sync()
     destroy_sync_objects();
 }
 
-void sync::sync_frame(const int frame)
+void sync::wait_force_fence(const int frame)
 {
     vkWaitForFences(m_device->get_logical_device(), 1, &m_fences[frame], VK_TRUE, UINT64_MAX);
     vkResetFences(m_device->get_logical_device(), 1, &m_fences[frame]);
@@ -79,9 +79,8 @@ VkResult sync::present_frame(const int frame, const uint32_t image_index)
 void sync::create_sync_objects()
 {
     m_sync_buffer = malloc(sizeof(VkSemaphore) * (m_frames_in_flight * 2) + sizeof(VkFence) * m_frames_in_flight);
-    if (m_sync_buffer == nullptr) {
-        throw std::runtime_error("failed to allocate memory for synchronization objects!");
-    }
+    quix_assert(m_sync_buffer != nullptr, "failed to allocate memory for synchronization objects");
+    
     m_fences = (VkFence*)m_sync_buffer;
     m_available_semaphores = (VkSemaphore*)((char*)m_sync_buffer + sizeof(VkFence) * m_frames_in_flight);
     m_finished_semaphores = (VkSemaphore*)((char*)m_sync_buffer + sizeof(VkFence) * m_frames_in_flight + sizeof(VkSemaphore) * m_frames_in_flight);
@@ -94,10 +93,9 @@ void sync::create_sync_objects()
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     for (size_t i = 0; i < m_frames_in_flight; i++) {
-        if (vkCreateSemaphore(m_device->get_logical_device(), &semaphoreInfo, nullptr, &m_available_semaphores[i]) != VK_SUCCESS || vkCreateSemaphore(m_device->get_logical_device(), &semaphoreInfo, nullptr, &m_finished_semaphores[i]) != VK_SUCCESS || vkCreateFence(m_device->get_logical_device(), &fenceInfo, nullptr, &m_fences[i]) != VK_SUCCESS) {
-
-            throw std::runtime_error("failed to create synchronization objects for a frame!");
-        }
+        VK_CHECK(vkCreateSemaphore(m_device->get_logical_device(), &semaphoreInfo, nullptr, &m_available_semaphores[i]), "failed to create semaphore");
+        VK_CHECK(vkCreateSemaphore(m_device->get_logical_device(), &semaphoreInfo, nullptr, &m_finished_semaphores[i]), "failed to create semaphore");
+        VK_CHECK(vkCreateFence(m_device->get_logical_device(), &fenceInfo, nullptr, &m_fences[i]), "failed to create fence");
     }
 }
 
@@ -128,18 +126,12 @@ void command_list::begin_record(VkCommandBufferUsageFlags flags)
         .pInheritanceInfo = nullptr // for secondary command buffers
     };
 
-    if (vkBeginCommandBuffer(buffer, &begin_info) != VK_SUCCESS) {
-        spdlog::error("failed to begin recording command buffer!");
-        throw std::runtime_error("failed to begin recording command buffer!");
-    }
+    VK_CHECK(vkBeginCommandBuffer(buffer, &begin_info), "failed to begin command buffer record");
 }
 
 void command_list::end_record()
 {
-    if (vkEndCommandBuffer(buffer) != VK_SUCCESS) {
-        spdlog::error("failed to record command buffer!");
-        throw std::runtime_error("failed to record command buffer!");
-    }
+    VK_CHECK(vkEndCommandBuffer(buffer), "failed to record command buffer!");
 }
 
 void command_list::begin_render_pass(std::shared_ptr<render_target> target, graphics::pipeline& pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count)

@@ -21,18 +21,11 @@ device::device(const char* app_name,
 
     m_logger.trace("device class created");
 
-    requested_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-
-    m_logger.info("requested extensions: {}", requested_extensions.size());
-
     glslang::InitializeProcess();
     m_logger.trace("glslang initialized");
 
     auto result = glfwInit();
-    if (result == GLFW_FALSE) {
-        spdlog::error("Failed to initialize GLFW");
-        throw std::runtime_error("failed to initialize GLFW!");
-    }
+    quix_assert(result != GLFW_FALSE, "failed to initialize GLFW");
 
     create_instance(app_name, app_version, engine_name, engine_version);
 
@@ -79,15 +72,14 @@ device::~device()
 void device::init(std::vector<const char*>&& requested_extensions, VkPhysicalDeviceFeatures requested_features)
 {
 #ifdef _DEBUG
-    if (initialized) {
-        m_logger.error("device already initialized");
-        throw std::runtime_error("device already initialized");
-    }
+    quix_assert(initialized == false, "device already initialized");
     initialized = true;
 #endif
 
     this->requested_extensions = std::move(requested_extensions);
     this->requested_features = requested_features;
+
+    m_logger.info("requested extensions: {}", requested_extensions.size());
 
     create_surface();
 
@@ -110,10 +102,7 @@ NODISCARD VkCommandPool device::get_command_pool()
         };
 
         VkCommandPool pool;
-        if (vkCreateCommandPool(m_logical_device, &pool_info, nullptr, &pool) != VK_SUCCESS) {
-            m_logger.error("failed to create command pool");
-            throw std::runtime_error("failed to create command pool!");
-        }
+        VK_CHECK(vkCreateCommandPool(m_logical_device, &pool_info, nullptr, &pool), "failed to create command pool");
         m_logger.trace("command pool created");
 
         return pool;
@@ -167,11 +156,7 @@ void device::create_instance(const char* app_name,
         .ppEnabledExtensionNames = glfwExtensions
     };
 
-    if (vkCreateInstance(&create_info, nullptr, &m_instance) != VK_SUCCESS) {
-        m_logger.error("Failed to create instance");
-        throw std::runtime_error("failed to create instance!");
-    }
-
+    VK_CHECK(vkCreateInstance(&create_info, nullptr, &m_instance), "failed to create vulkan instance");
     m_logger.trace("instance created");
 }
 
@@ -184,21 +169,15 @@ void device::create_window(const char* app_name,
 
     window = glfwCreateWindow(width, height, app_name, nullptr, nullptr);
 
-    if (window == nullptr) {
-        m_logger.error("failed to create GLFW window");
-        glfwTerminate();
-        throw std::runtime_error("failed to create window!");
-    }
+    quix_assert(window != nullptr, "failed to create GLFW window");
+    
     m_logger.trace("window created");
 }
 
 void device::create_surface()
 {
-    VkResult error;
-    if (glfwCreateWindowSurface(m_instance, window, nullptr, &m_surface) != VK_SUCCESS) {
-        m_logger.error("failed to create window surface: {}", error);
-        throw std::runtime_error("failed to create window surface!");
-    }
+    VK_CHECK(glfwCreateWindowSurface(m_instance, window, nullptr, &m_surface), "failed to create window surface");
+
     m_logger.trace("surface created");
 }
 
@@ -239,11 +218,9 @@ device::find_queue_families(VkPhysicalDevice physical_device)
         iterator++;
     }
 
-    if (indices.is_complete()) {
-        return indices;
-    } else {
-        throw std::runtime_error("failed to find queue families!");
-    }
+    quix_assert(indices.is_complete(), "failed to find queue families");
+    
+    return indices;
 }
 
 bool device::check_device_extension_support(VkPhysicalDevice physical_device)
@@ -464,9 +441,7 @@ void device::pick_physical_device()
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
 
-    if (deviceCount == 0) {
-        throw std::runtime_error("failed to find GPUs with Vulkan support!");
-    }
+    quix_assert(deviceCount != 0, "failed to find GPUs with Vulkan support");
 
     auto* devices = static_cast<VkPhysicalDevice*>(
         alloca(sizeof(VkPhysicalDevice) * deviceCount));
@@ -500,10 +475,7 @@ void device::pick_physical_device()
         }
     }
 
-    if (m_physical_device == VK_NULL_HANDLE) {
-        m_logger.error("failed to find a suitable GPU!");
-        throw std::runtime_error("failed to find a suitable GPU!");
-    }
+    quix_assert(m_physical_device != VK_NULL_HANDLE, "failed to find a suitable GPU");
 
     m_logger.trace("selected physical device");
 }
@@ -538,9 +510,7 @@ void device::create_logical_device()
     createInfo.enabledExtensionCount = static_cast<uint32_t>(requested_extensions.size());
     createInfo.ppEnabledExtensionNames = requested_extensions.data();
 
-    if (vkCreateDevice(m_physical_device, &createInfo, nullptr, &m_logical_device) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create logical device!");
-    }
+    VK_CHECK(vkCreateDevice(m_physical_device, &createInfo, nullptr, &m_logical_device), "failed to create a logical device");
 
     m_logger.trace("created logical device");
 
@@ -558,7 +528,7 @@ void device::create_allocator()
     allocatorInfo.physicalDevice = m_physical_device,
     allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_3,
 
-    vmaCreateAllocator(&allocatorInfo, &m_allocator);
+    VK_CHECK(vmaCreateAllocator(&allocatorInfo, &m_allocator), "failed to create VMA allocator");
 
     m_logger.trace("created allocator");
 }

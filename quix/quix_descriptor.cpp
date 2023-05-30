@@ -59,8 +59,7 @@ namespace descriptor {
             break;
         default:
             // unrecoverable error
-
-            throw std::runtime_error("Failed to allocate descriptor set (unrecoverable error)");
+            quix_error("failed to allocate descriptor set (unrecoverable error)");
         }
 
         if (needReallocate) {
@@ -76,7 +75,9 @@ namespace descriptor {
             }
         }
 
-        throw std::runtime_error("Failed to allocate descriptor set (after realloc)");
+        quix_error("Failed to allocate descriptor set (after realloc)");
+        // I had to do this to get rid of a warning even though quix_error exits the program
+        return {};
     }
 
     // allocator_pool struct end
@@ -111,9 +112,8 @@ namespace descriptor {
 
     allocator_pool allocator::getPool()
     {
-        if (device == VK_NULL_HANDLE) {
-            throw std::runtime_error("allocator class was not initialized (device is VK_NULL_HANDLE)");
-        }
+        quix_assert(device != VK_NULL_HANDLE, "allocator class was not initialized (device is VK_NULL_HANDLE)");
+        
         return allocator_pool(this, borrowPool());
     }
 
