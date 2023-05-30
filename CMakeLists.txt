@@ -4,6 +4,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_definitions(_DEBUG)
 endif()
 
+message("IPO enabled? ${CMAKE_INTERPROCEDURAL_OPTIMIZATION}")
+
 project(quix)
 
 add_library(${PROJECT_NAME} 

@@ -43,6 +43,11 @@ render_target::~render_target() {
     vkDestroyRenderPass(m_device->get_logical_device(), m_render_pass, nullptr);
 }
 
+NODISCARD VkExtent2D render_target::get_extent() const noexcept
+{
+    return m_swapchain->get_extent();
+}
+
 void render_target::create_renderpass(const VkRenderPassCreateInfo* renderpass_info)
 {
     if (vkCreateRenderPass(m_device->get_logical_device(), renderpass_info, nullptr, &m_render_pass) != VK_SUCCESS) {

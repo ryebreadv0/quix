@@ -122,7 +122,6 @@ NODISCARD VkCommandPool device::get_command_pool()
     std::lock_guard<std::mutex> lock(m_command_pool_mutex);
     VkCommandPool pool = m_command_pools.front();
     m_command_pools.pop_front();
-    vkResetCommandPool(m_logical_device, pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
 
     m_logger.trace("command pool retrieved");
 
@@ -133,6 +132,7 @@ void device::return_command_pool(VkCommandPool command_pool)
 {
     {
         std::lock_guard<std::mutex> lock(m_command_pool_mutex); // TODO determine if it is worth it to releasr resources
+        vkResetCommandPool(m_logical_device, command_pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
         m_command_pools.push_back(command_pool);
     }
     m_logger.trace("command pool returned");

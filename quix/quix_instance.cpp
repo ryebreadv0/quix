@@ -57,6 +57,16 @@ NODISCARD std::shared_ptr<render_target> instance::create_render_target(const Vk
     return std::make_shared<render_target>(m_device, m_swapchain, &render_pass_create_info);
 }
 
+NODISCARD std::shared_ptr<sync> instance::create_sync_objects() const noexcept
+{
+    return std::make_shared<sync>(m_device, m_swapchain);
+}
+
+void instance::wait_idle()
+{
+    m_device->wait_idle();
+}
+
 NODISCARD GLFWwindow*
 instance::window() const noexcept
 {

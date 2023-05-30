@@ -39,7 +39,9 @@ public:
     render_target(render_target&&) = delete;
     render_target& operator=(render_target&&) = delete;
 
-    NODISCARD VkRenderPass get_render_pass() const noexcept { return m_render_pass; }
+    NODISCARD inline VkRenderPass get_render_pass() const noexcept { return m_render_pass; }
+    NODISCARD inline VkFramebuffer get_framebuffer(uint32_t index) const noexcept { return m_framebuffers[index]; }
+    NODISCARD VkExtent2D get_extent() const noexcept;
 
 private:
     void create_renderpass(const VkRenderPassCreateInfo* renderpass_info);

@@ -1,11 +1,12 @@
+#include "quix_command_list.hpp"
 #include "quix_descriptor.hpp"
 #include "quix_instance.hpp"
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"
-#include "quix_command_list.hpp"
 
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
+static constexpr int FRAMES_IN_FLIGHT = 2;
 
 int main()
 {
@@ -16,7 +17,7 @@ int main()
     instance.create_device({ VK_KHR_SWAPCHAIN_EXTENSION_NAME },
         { .tessellationShader = VK_TRUE });
 
-    instance.create_swapchain(2, VK_PRESENT_MODE_FIFO_KHR);
+    instance.create_swapchain(FRAMES_IN_FLIGHT, VK_PRESENT_MODE_FIFO_KHR);
 
     quix::renderpass_info<1, 1, 0> renderpass_info = {
         { VkAttachmentDescription {
@@ -48,24 +49,57 @@ int main()
         pipeline_builder.create_shader_stage("examples/simpleshader.vert", VK_SHADER_STAGE_VERTEX_BIT),
         pipeline_builder.create_shader_stage("examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
 
-    auto allocator_pool = instance.get_descriptor_allocator_pool();
-    auto descriptor_set_builder = instance.get_descriptor_builder(&allocator_pool);
-    auto descriptor_set_layout = descriptor_set_builder
-        .bind_buffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-        .buildLayout();
+    // auto allocator_pool = instance.get_descriptor_allocator_pool();
+    // auto descriptor_set_builder = instance.get_descriptor_builder(&allocator_pool);
+    // auto descriptor_set_layout = descriptor_set_builder
+    //                                  .bind_buffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+                                    //  .buildLayout();
 
     auto pipeline = pipeline_builder.add_shader_stages(shader_stages)
-        .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
-        .add_descriptor_set_layout(descriptor_set_layout)
-        .create_graphics_pipeline();
+                        // .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
+                        // .add_descriptor_set_layout(descriptor_set_layout)
+                        .create_graphics_pipeline();
 
     auto command_pool = instance.get_command_pool();
-    
+
     auto* window = instance.window();
+
+    int current_frame = 0;
+    uint32_t current_image_index = 0;
+
+    auto sync_objects = instance.create_sync_objects();
+
+    std::array<std::shared_ptr<quix::command_list>, FRAMES_IN_FLIGHT> command_lists {
+        command_pool->create_command_list(), command_pool->create_command_list()
+    };
+
+    std::array<VkClearValue, 1> clear_values = {
+        { { 0.0f, 0.0f, 0.0f, 0.0f } }
+    };
 
     while (glfwWindowShouldClose(window) == GLFW_FALSE) {
         glfwPollEvents();
+
+        sync_objects->acquire_next_image(current_frame, &current_image_index);
+
+        command_lists[current_frame]->begin_record();
+
+        command_lists[current_frame]->begin_render_pass(render_target, pipeline, current_image_index, clear_values.data(), clear_values.size());
+
+        vkCmdDraw(command_lists[current_frame]->get_buffer(), 3, 1, 0, 0);
+
+        command_lists[current_frame]->end_render_pass();
+
+        command_lists[current_frame]->end_record();
+
+        sync_objects->submit_frame(current_frame, command_lists[current_frame]);
+
+        sync_objects->present_frame(current_frame, current_image_index);
+
+        current_frame = (current_frame + 1) % FRAMES_IN_FLIGHT;
     }
+
+    instance.wait_idle();
 
     return 0;
 }

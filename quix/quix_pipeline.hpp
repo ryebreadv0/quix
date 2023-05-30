@@ -1,11 +1,11 @@
 #ifndef _QUIX_PIPELINE_HPP
 #define _QUIX_PIPELINE_HPP
 
-#include "quix_instance.hpp"
-
 #include "quix_pipeline_builder.hpp"
 
 namespace quix {
+
+class device;
 
 namespace graphics {
 

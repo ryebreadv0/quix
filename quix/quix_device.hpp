@@ -3,13 +3,13 @@
 
 #include "quix_common.hpp"
 
-#include "quix_instance.hpp"
-
 namespace quix {
 
-// using device = class instance::device {
+class swapchain;
+
 class device {
     friend class swapchain;
+
 public:
     device(const char* app_name,
         uint32_t app_version,
@@ -36,11 +36,11 @@ public:
     NODISCARD inline queue_family_indices get_queue_family_indices() const noexcept { return m_queue_family_indices.value(); }
     NODISCARD inline VkQueue get_graphics_queue() const noexcept { return m_graphics_queue; }
     NODISCARD inline VkQueue get_present_queue() const noexcept { return m_present_queue; }
-    
+
     NODISCARD VkCommandPool get_command_pool();
     void return_command_pool(VkCommandPool command_pool);
 
-    
+    inline void wait_idle() { vkDeviceWaitIdle(m_logical_device); }
 
 private:
     void create_instance(const char* app_name,
@@ -82,18 +82,14 @@ private:
 
     static constexpr uint32_t vk_api_version = VK_API_VERSION_1_3;
 
-    std::vector<const char*> requested_extensions{};
-    VkPhysicalDeviceFeatures requested_features{};
+    std::vector<const char*> requested_extensions {};
+    VkPhysicalDeviceFeatures requested_features {};
 
     std::optional<queue_family_indices> m_queue_family_indices;
 
     std::deque<VkCommandPool> m_command_pools;
     std::mutex m_command_pool_mutex;
 };
-
-
-
-
 
 } // namespace quix
 

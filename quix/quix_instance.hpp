@@ -18,6 +18,7 @@ namespace descriptor {
     struct allocator_pool;
 }
 
+class sync;
 class command_pool;
 
 class instance {
@@ -35,6 +36,9 @@ public:
     void create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
     void create_pipeline_manager();
     NODISCARD std::shared_ptr<render_target> create_render_target(const VkRenderPassCreateInfo&& renderpass_create_info) const noexcept;
+    NODISCARD std::shared_ptr<sync> create_sync_objects() const noexcept;
+
+    void wait_idle();
 
     NODISCARD GLFWwindow* window() const noexcept;
     NODISCARD VkDevice get_logical_device() const noexcept;
