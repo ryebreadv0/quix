@@ -39,8 +39,8 @@ void instance::create_device(std::vector<const char*>&& requested_extensions, Vk
 {
     m_device->init(std::move(requested_extensions), requested_features);
 
-    m_descriptor_allocator.reset(allocate_unique<descriptor::allocator>(m_device->get_logical_device()));
-    m_descriptor_layout_cache.reset(allocate_unique<descriptor::layout_cache>(m_device->get_logical_device()));
+    m_descriptor_allocator = allocate_unique<descriptor::allocator>(m_device->get_logical_device());
+    m_descriptor_layout_cache = allocate_unique<descriptor::layout_cache>(m_device->get_logical_device());
 }
 
 void instance::create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode)

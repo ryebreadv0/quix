@@ -55,17 +55,19 @@ private:
     NODISCARD std::shared_ptr<device> get_device() const noexcept;
 
     template <typename Type, typename... Args>
-    constexpr inline std::shared_ptr<Type> allocate_shared(Args... args)
+    NODISCARD constexpr inline std::shared_ptr<Type> allocate_shared(Args... args)
     {
         return std::allocate_shared<Type, std::pmr::polymorphic_allocator<Type>>(&m_allocator, args...);
     }
 
     template <typename Type, typename... Args>
-    constexpr inline Type* allocate_unique(Args... args)
+    NODISCARD constexpr inline std::unique_ptr<Type,std::function<void(Type*)>> allocate_unique(Args... args)
     {
         void* allocation = m_allocator.allocate(sizeof(Type), alignof(Type));
-        allocation = new Type { args... };
-        return (Type*)allocation;
+        Type* object = new (allocation) Type { args... };
+        return std::unique_ptr<Type, std::function<void(Type*)>>{ object, [](Type* ptr){
+            ptr->~Type();
+        }};
     }
 
     std::pmr::monotonic_buffer_resource m_allocator;
@@ -74,8 +76,8 @@ private:
     std::shared_ptr<swapchain> m_swapchain;
     std::shared_ptr<graphics::pipeline_manager> m_pipeline_manager;
 
-    std::unique_ptr<descriptor::allocator> m_descriptor_allocator;
-    std::unique_ptr<descriptor::layout_cache> m_descriptor_layout_cache;
+    std::unique_ptr<descriptor::allocator, std::function<void(descriptor::allocator*)>> m_descriptor_allocator;
+    std::unique_ptr<descriptor::layout_cache, std::function<void(descriptor::layout_cache*)>> m_descriptor_layout_cache;
 };
 
 } // namespace quix

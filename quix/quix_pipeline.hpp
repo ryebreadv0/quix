@@ -25,7 +25,7 @@ namespace graphics {
 
     private:
         template <typename Type, typename... Args>
-        constexpr inline std::shared_ptr<Type> allocate_shared(Args... args)
+        NODISCARD constexpr inline std::shared_ptr<Type> allocate_shared(Args... args)
         {
             return std::allocate_shared<Type, std::pmr::polymorphic_allocator<Type>>(&m_allocator, args...);
         }

@@ -28,7 +28,6 @@ namespace graphics {
         NODISCARD inline VkPipeline get_pipeline() const noexcept { return m_pipeline; }
 
     private:
-
         std::shared_ptr<device> m_device;
         std::shared_ptr<render_target> m_render_target;
 
@@ -44,14 +43,13 @@ namespace graphics {
 
     public:
         pipeline_builder(std::shared_ptr<device> s_device, std::shared_ptr<render_target> s_render_target, pipeline_manager* pipeline_manager);
-        
+
         NODISCARD VkPipelineShaderStageCreateInfo create_shader_stage(
             const char* file_path, const VkShaderStageFlagBits shader_stage);
 
         NODISCARD std::shared_ptr<pipeline> create_graphics_pipeline();
 
     private:
-
         struct pipeline_info {
             VkPipelineVertexInputStateCreateInfo vertex_input_state;
             VkPipelineInputAssemblyStateCreateInfo input_assembly_state;
