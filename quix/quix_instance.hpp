@@ -24,7 +24,7 @@ class command_pool;
 class instance {
 public:
 
-    instance(const char* app_name, uint32_t app_version, uint32_t width, uint32_t height);
+    instance(const char* app_name, uint32_t app_version, int width, int height);
     ~instance();
 
     instance(const instance&) = delete;
@@ -35,7 +35,7 @@ public:
     void create_device(std::vector<const char*>&& requested_extensions, VkPhysicalDeviceFeatures requested_features);
     void create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
     void create_pipeline_manager();
-    NODISCARD std::shared_ptr<render_target> create_render_target(const VkRenderPassCreateInfo&& renderpass_create_info) const noexcept;
+    NODISCARD std::shared_ptr<render_target> create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) const noexcept;
     NODISCARD std::shared_ptr<sync> create_sync_objects() const noexcept;
 
     void wait_idle();
@@ -57,12 +57,12 @@ private:
     NODISCARD std::shared_ptr<device> get_device() const noexcept;
 
 
-    std::shared_ptr<device> m_device = nullptr;
-    std::shared_ptr<swapchain> m_swapchain = nullptr;
-    std::shared_ptr<graphics::pipeline_manager> m_pipeline_manager = nullptr;
+    std::shared_ptr<device> m_device;
+    std::shared_ptr<swapchain> m_swapchain;
+    std::shared_ptr<graphics::pipeline_manager> m_pipeline_manager;
     
-    std::unique_ptr<descriptor::allocator> m_descriptor_allocator = nullptr;
-    std::unique_ptr<descriptor::layout_cache> m_descriptor_layout_cache = nullptr;
+    std::unique_ptr<descriptor::allocator> m_descriptor_allocator;
+    std::unique_ptr<descriptor::layout_cache> m_descriptor_layout_cache;
 
 };
 

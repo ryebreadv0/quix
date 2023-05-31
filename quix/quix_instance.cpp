@@ -3,6 +3,8 @@
 
 #include "quix_instance.hpp"
 
+#include <memory>
+
 #include "quix_common.hpp"
 #include "quix_descriptor.hpp"
 #include "quix_device.hpp"
@@ -15,14 +17,18 @@ namespace quix {
 
 instance::instance(const char* app_name,
     uint32_t app_version,
-    uint32_t width,
-    uint32_t height)
+    int width,
+    int height)
     : m_device(std::make_shared<device>(app_name,
         app_version,
         "quix",
         VK_MAKE_VERSION(1, 0, 0),
         width,
         height))
+    , m_swapchain(nullptr)
+    , m_pipeline_manager(nullptr)
+    , m_descriptor_allocator(nullptr)
+    , m_descriptor_layout_cache(nullptr)
 {
 }
 
@@ -33,7 +39,7 @@ void instance::create_device(std::vector<const char*>&& requested_extensions, Vk
     m_device->init(std::move(requested_extensions), requested_features);
 
     m_descriptor_allocator.reset(descriptor::allocator::init(m_device->get_logical_device()));
-    m_descriptor_layout_cache.reset(new descriptor::layout_cache);
+    m_descriptor_layout_cache = std::make_unique<descriptor::layout_cache>();
     m_descriptor_layout_cache->init(m_device->get_logical_device());
 }
 

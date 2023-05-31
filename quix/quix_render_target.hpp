@@ -8,21 +8,21 @@ class swapchain;
 
 template <std::size_t Attachments, std::size_t Subpasses, std::size_t Dependencies>
 struct renderpass_info {
-    VkAttachmentDescription attachments[Attachments];
-    VkAttachmentReference attachments_references[Attachments];
-    VkSubpassDescription subpasses[Subpasses];
-    VkSubpassDependency subpass_dependencies[Dependencies];
+    std::array<VkAttachmentDescription, Attachments> attachments;
+    std::array<VkAttachmentReference, Attachments> attachments_references;
+    std::array<VkSubpassDescription, Subpasses> subpasses;
+    std::array<VkSubpassDependency, Dependencies> subpass_dependencies;
 
     NODISCARD VkRenderPassCreateInfo export_renderpass_info() const noexcept
     {
         return VkRenderPassCreateInfo {
             .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
             .attachmentCount = Attachments,
-            .pAttachments = attachments,
+            .pAttachments = attachments.data(),
             .subpassCount = Subpasses,
-            .pSubpasses = subpasses,
+            .pSubpasses = subpasses.data(),
             .dependencyCount = Dependencies,
-            .pDependencies = subpass_dependencies
+            .pDependencies = subpass_dependencies.data()
         };
     }
 };

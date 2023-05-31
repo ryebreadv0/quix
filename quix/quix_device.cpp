@@ -2,6 +2,7 @@
 #define _QUIX_DEVICE_CPP
 
 #include "quix_device.hpp"
+#include <vulkan/vulkan_core.h>
 
 namespace quix {
 
@@ -9,9 +10,10 @@ device::device(const char* app_name,
     uint32_t app_version,
     const char* engine_name,
     uint32_t engine_version,
-    uint32_t width,
-    uint32_t height)
+    int width,
+    int height)
     : m_logger("device", spdlog::level::trace)
+    , window(nullptr)
 {
     m_logger.add_sink(std::make_shared<spdlog::sinks::basic_file_sink_mt>(
         "logs/device.log", true));
@@ -93,6 +95,7 @@ void device::init(std::vector<const char*>&& requested_extensions, VkPhysicalDev
 NODISCARD VkCommandPool device::get_command_pool()
 {
     if (m_command_pools.empty()) {
+        quix_assert(m_queue_family_indices.has_value(), "queue family indices not initialized");
         m_logger.trace("creating command pool");
         VkCommandPoolCreateInfo pool_info = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -101,7 +104,7 @@ NODISCARD VkCommandPool device::get_command_pool()
             .queueFamilyIndex = m_queue_family_indices->graphics_family.value()
         };
 
-        VkCommandPool pool;
+        VkCommandPool pool = VK_NULL_HANDLE;
         VK_CHECK(vkCreateCommandPool(m_logical_device, &pool_info, nullptr, &pool), "failed to create command pool");
         m_logger.trace("command pool created");
 
@@ -161,8 +164,8 @@ void device::create_instance(const char* app_name,
 }
 
 void device::create_window(const char* app_name,
-    uint32_t width,
-    uint32_t height)
+    int width,
+    int height)
 {
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

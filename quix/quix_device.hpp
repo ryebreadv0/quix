@@ -15,8 +15,8 @@ public:
         uint32_t app_version,
         const char* engine_name,
         uint32_t engine_version,
-        uint32_t width,
-        uint32_t height);
+        int width,
+        int height);
 
     ~device();
 
@@ -47,7 +47,7 @@ private:
         uint32_t app_version,
         const char* engine_name,
         uint32_t engine_version);
-    void create_window(const char* app_name, uint32_t width, uint32_t height);
+    void create_window(const char* app_name, int width, int height);
     void create_surface();
 
     queue_family_indices find_queue_families(VkPhysicalDevice physical_device);
