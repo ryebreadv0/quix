@@ -31,16 +31,19 @@ namespace descriptor {
     class allocator {
         friend class allocator_pool;
     public:
-        static allocator* init(VkDevice device);
+        allocator(VkDevice device);
+
+        ~allocator();
+        allocator(const allocator&) = delete;
+        allocator& operator=(const allocator&) = delete;
+        allocator(allocator&&) = delete;
+        allocator& operator=(allocator&&) = delete;
+
         void cleanup();
         VkDevice getDevice();
         allocator_pool getPool();
-        ~allocator();
 
     private:
-        allocator();
-        allocator(const allocator&) = delete;
-        void operator=(allocator const&) = delete;
 
         VkDevice device { VK_NULL_HANDLE };
 
@@ -55,11 +58,13 @@ namespace descriptor {
 
     class layout_cache {
     public:
-        void init(VkDevice newDevice);
+        layout_cache(VkDevice device);
         void cleanup();
 
         ~layout_cache();
+        layout_cache(const layout_cache&) = delete;
         layout_cache& operator=(const layout_cache&) = delete;
+        layout_cache(layout_cache&&) = delete;
         layout_cache& operator=(layout_cache&&) = delete;
 
         // unordered map is sychronized

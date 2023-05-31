@@ -43,9 +43,12 @@ public:
     NODISCARD inline VkFramebuffer get_framebuffer(uint32_t index) const noexcept { return m_framebuffers[index]; }
     NODISCARD VkExtent2D get_extent() const noexcept;
 
+    void recreate_swapchain();
+
 private:
     void create_renderpass(const VkRenderPassCreateInfo* renderpass_info);
     void create_framebuffers();
+    void destroy_framebuffers();
 
     std::shared_ptr<device> m_device;
     std::shared_ptr<swapchain> m_swapchain;

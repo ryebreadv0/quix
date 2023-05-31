@@ -4,11 +4,12 @@
 namespace quix {
 
 class device;
-
 struct queue_family_indices;
+class render_target;
 
 class swapchain {
     friend class device;
+    friend class render_target;
 
 public:
     swapchain(std::shared_ptr<device> p_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
@@ -26,7 +27,9 @@ public:
     NODISCARD inline const std::vector<VkImageView>& get_image_views() const noexcept { return m_swapchain_image_views; }
 
 private:
-    void create_swapchain();
+    void recreate_swapchain();
+
+    void create_swapchain(VkSwapchainKHR old_swapchain = VK_NULL_HANDLE);
     void destroy_swapchain();
     void create_image_views();
     void destroy_image_views();

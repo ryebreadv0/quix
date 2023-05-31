@@ -23,18 +23,20 @@ sync::~sync()
     destroy_sync_objects();
 }
 
-void sync::wait_force_fence(const int frame)
+void sync::wait_for_fence(const int frame)
 {
     vkWaitForFences(m_device->get_logical_device(), 1, &m_fences[frame], VK_TRUE, UINT64_MAX);
+}
+
+void sync::reset_fence(const int frame)
+{
     vkResetFences(m_device->get_logical_device(), 1, &m_fences[frame]);
 }
 
 VkResult sync::acquire_next_image(const int frame, uint32_t* image_index)
 {
     vkWaitForFences(m_device->get_logical_device(), 1, &m_fences[frame], VK_TRUE, UINT64_MAX);
-    VkResult result = vkAcquireNextImageKHR(m_device->get_logical_device(), m_swapchain->get_swapchain(), UINT64_MAX, m_available_semaphores[frame], VK_NULL_HANDLE, image_index);
-    vkResetFences(m_device->get_logical_device(), 1, &m_fences[frame]);
-    return result;
+    return vkAcquireNextImageKHR(m_device->get_logical_device(), m_swapchain->get_swapchain(), UINT64_MAX, m_available_semaphores[frame], VK_NULL_HANDLE, image_index);
 }
 
 VkResult sync::submit_frame(const int frame, std::shared_ptr<command_list> command)
@@ -134,7 +136,7 @@ void command_list::end_record()
     VK_CHECK(vkEndCommandBuffer(buffer), "failed to record command buffer!");
 }
 
-void command_list::begin_render_pass(std::shared_ptr<render_target> target, graphics::pipeline& pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count)
+void command_list::begin_render_pass(std::shared_ptr<render_target> target, std::shared_ptr<graphics::pipeline> pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count)
 {
     VkRenderPassBeginInfo render_pass_begin_info {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -149,7 +151,7 @@ void command_list::begin_render_pass(std::shared_ptr<render_target> target, grap
 
     vkCmdBeginRenderPass(buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.get_pipeline());
+    vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->get_pipeline());
 
     VkViewport viewport {
         .x = 0.0f,

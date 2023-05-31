@@ -27,6 +27,28 @@ namespace graphics {
     } // namespace defaults
 
     // pipeline_builder class
+    
+    pipeline_builder::pipeline_builder(std::shared_ptr<device> s_device, std::shared_ptr<render_target> s_render_target, pipeline_manager* pipeline_manager)
+        : m_device(s_device)
+        , m_render_target(s_render_target)
+        , m_pipeline_manager(pipeline_manager)
+    {
+        pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+        pipeline_create_info.basePipelineHandle = nullptr;
+        pipeline_create_info.basePipelineIndex = -1;
+
+        init_pipeline_defaults();
+    }
+
+    NODISCARD std::shared_ptr<pipeline> pipeline_builder::create_graphics_pipeline()
+    {
+        create_pipeline_layout_info();
+
+        return m_pipeline_manager->allocate_shared<pipeline>(m_device, m_render_target, &m_layout_info, &pipeline_create_info);
+
+        // return pipeline { m_device, m_render_target, &m_layout_info, &pipeline_create_info };
+    }
+
     VkPipelineShaderStageCreateInfo pipeline_builder::create_shader_stage(
         const char* file_path, const VkShaderStageFlagBits shader_stage)
     {
@@ -118,9 +140,10 @@ namespace graphics {
     {
     }
 
-    pipeline_builder pipeline_manager::create_pipeline_builder(std::shared_ptr<render_target> render_target)
+    std::shared_ptr<pipeline_builder> pipeline_manager::create_pipeline_builder(std::shared_ptr<render_target> render_target)
     {
-        return pipeline_builder { m_device, render_target };
+        return allocate_shared<pipeline_builder>(m_device, render_target, this);
+        // return pipeline_builder { m_device, render_target };
     }
 
     // pipeline_manager class end

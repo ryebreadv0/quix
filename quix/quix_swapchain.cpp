@@ -31,7 +31,21 @@ swapchain::~swapchain()
     m_logger.trace("Destroyed swapchain class");
 }
 
-void swapchain::create_swapchain()
+void swapchain::recreate_swapchain()
+{
+    VkSwapchainKHR old_swapchain = m_swapchain;
+    m_swapchain_images.clear();
+    create_swapchain(old_swapchain);
+
+    destroy_image_views();
+    m_swapchain_image_views.clear();
+    
+    create_image_views();
+
+    vkDestroySwapchainKHR(m_device->get_logical_device(), old_swapchain, nullptr);
+}
+
+void swapchain::create_swapchain(VkSwapchainKHR old_swapchain)
 {
     swapchain_support_details swapchain_support = m_device->query_swapchain_support(m_device->get_physical_device());
 
@@ -73,7 +87,7 @@ void swapchain::create_swapchain()
     createInfo.presentMode = present_mode;
     createInfo.clipped = VK_TRUE;
 
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
+    createInfo.oldSwapchain = old_swapchain;
 
     VK_CHECK(vkCreateSwapchainKHR(m_device->get_logical_device(), &createInfo, nullptr, &m_swapchain), "failed to create swapchain");
 

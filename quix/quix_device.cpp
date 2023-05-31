@@ -2,7 +2,6 @@
 #define _QUIX_DEVICE_CPP
 
 #include "quix_device.hpp"
-#include <vulkan/vulkan_core.h>
 
 namespace quix {
 
@@ -123,7 +122,7 @@ NODISCARD VkCommandPool device::get_command_pool()
 void device::return_command_pool(VkCommandPool command_pool)
 {
     {
-        std::lock_guard<std::mutex> lock(m_command_pool_mutex); // TODO determine if it is worth it to releasr resources
+        std::lock_guard<std::mutex> lock(m_command_pool_mutex); // TODO determine if it is worth it to release resources
         vkResetCommandPool(m_logical_device, command_pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
         m_command_pools.push_back(command_pool);
     }
@@ -167,12 +166,19 @@ void device::create_window(const char* app_name,
     int width,
     int height)
 {
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     window = glfwCreateWindow(width, height, app_name, nullptr, nullptr);
 
     quix_assert(window != nullptr, "failed to create GLFW window");
+
+    glfwSetWindowUserPointer(window, this);
+
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height){
+        auto* ptr = reinterpret_cast<device*>(glfwGetWindowUserPointer(window));
+        ptr->framebuffer_resized = true;
+    });
     
     m_logger.trace("window created");
 }

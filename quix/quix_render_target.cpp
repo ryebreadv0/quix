@@ -36,9 +36,7 @@ render_target::render_target(std::shared_ptr<device> s_device, std::shared_ptr<s
 }
 
 render_target::~render_target() {
-    for (auto framebuffer : m_framebuffers) {
-        vkDestroyFramebuffer(m_device->get_logical_device(), framebuffer, nullptr);
-    }
+    destroy_framebuffers();
 
     vkDestroyRenderPass(m_device->get_logical_device(), m_render_pass, nullptr);
 }
@@ -46,6 +44,24 @@ render_target::~render_target() {
 NODISCARD VkExtent2D render_target::get_extent() const noexcept
 {
     return m_swapchain->get_extent();
+}
+
+void render_target::recreate_swapchain()
+{
+    auto* window = m_device->get_window();
+    int width = 0, height = 0;
+    while (width == 0 && height == 0) {
+        glfwGetFramebufferSize(window, &width, &height);
+        glfwWaitEvents();
+    }
+
+    m_device->wait_idle();
+
+    m_swapchain->recreate_swapchain();
+
+    destroy_framebuffers();
+    
+    create_framebuffers();
 }
 
 void render_target::create_renderpass(const VkRenderPassCreateInfo* renderpass_info)
@@ -74,6 +90,13 @@ void render_target::create_framebuffers()
         };
 
         VK_CHECK(vkCreateFramebuffer(m_device->get_logical_device(), &framebuffer_info, nullptr, &m_framebuffers[i]), "failed to create framebuffer");
+    }
+}
+
+void render_target::destroy_framebuffers()
+{
+    for (auto framebuffer : m_framebuffers) {
+        vkDestroyFramebuffer(m_device->get_logical_device(), framebuffer, nullptr);
     }
 }
 

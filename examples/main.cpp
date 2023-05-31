@@ -19,7 +19,7 @@ int main()
 
     instance.create_swapchain(FRAMES_IN_FLIGHT, VK_PRESENT_MODE_FIFO_KHR);
 
-    quix::renderpass_info<1, 1, 0> renderpass_info = {
+    quix::renderpass_info<1, 1, 1> renderpass_info = {
         { VkAttachmentDescription {
             .format = instance.get_surface_format().format,
             .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -36,18 +36,25 @@ int main()
             .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
             .colorAttachmentCount = 1,
             .pColorAttachments = &renderpass_info.attachments_references[0] } },
-        {}
+        { VkSubpassDependency {
+            VK_SUBPASS_EXTERNAL,
+            0,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+            0,
+            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            0 } }
     };
 
     auto render_target = instance.create_render_target(renderpass_info.export_renderpass_info());
 
     instance.create_pipeline_manager();
     auto pipeline_manager = instance.get_pipeline_manager();
-    quix::graphics::pipeline_builder pipeline_builder = pipeline_manager->create_pipeline_builder(render_target);
+    auto pipeline_builder = pipeline_manager->create_pipeline_builder(render_target);
 
-    auto shader_stages = pipeline_builder.create_shader_array(
-        pipeline_builder.create_shader_stage("examples/simpleshader.vert", VK_SHADER_STAGE_VERTEX_BIT),
-        pipeline_builder.create_shader_stage("examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+    auto shader_stages = pipeline_builder->create_shader_array(
+        pipeline_builder->create_shader_stage("examples/simpleshader.vert", VK_SHADER_STAGE_VERTEX_BIT),
+        pipeline_builder->create_shader_stage("examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
 
     auto allocator_pool = instance.get_descriptor_allocator_pool();
     auto descriptor_set_builder = instance.get_descriptor_builder(&allocator_pool);
@@ -55,7 +62,7 @@ int main()
                                      .bind_buffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
                                      .buildLayout();
 
-    auto pipeline = pipeline_builder.add_shader_stages(shader_stages)
+    auto pipeline = pipeline_builder->add_shader_stages(shader_stages)
                         .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
                         .add_descriptor_set_layout(descriptor_set_layout)
                         .create_graphics_pipeline();
@@ -80,7 +87,14 @@ int main()
     while (glfwWindowShouldClose(window) == GLFW_FALSE) {
         glfwPollEvents();
 
-        VK_CHECK(sync_objects->acquire_next_image(current_frame, &current_image_index), std::format("failed to aqcuire image"));
+        VkResult result = sync_objects->acquire_next_image(current_frame, &current_image_index);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+            render_target->recreate_swapchain();
+            continue;
+        } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+            quix_error("failed to acquire swapchain image");
+        }
+        sync_objects->reset_fence(current_frame);
 
         command_lists[current_frame]->begin_record();
 
@@ -92,9 +106,14 @@ int main()
 
         command_lists[current_frame]->end_record();
 
-        VK_CHECK(sync_objects->submit_frame(current_frame, command_lists[current_frame]), std::format("failed to submit frame"));
+        VK_CHECK(sync_objects->submit_frame(current_frame, command_lists[current_frame]), "failed to submit frame");
 
-        VK_CHECK(sync_objects->present_frame(current_frame, current_image_index), std::format("failed to present frame"));
+        result = sync_objects->present_frame(current_frame, current_image_index);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+            render_target->recreate_swapchain();
+        else if (result != VK_SUCCESS)
+            quix_error("failed to present swapchain image");
 
         current_frame = (current_frame + 1) % FRAMES_IN_FLIGHT;
     }

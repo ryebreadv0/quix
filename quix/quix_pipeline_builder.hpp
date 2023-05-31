@@ -7,11 +7,16 @@ class device;
 class render_target;
 
 namespace graphics {
+    class pipeline_manager;
 
     class pipeline {
         friend class pipeline_builder;
 
     public:
+        pipeline(std::shared_ptr<device> device,
+            std::shared_ptr<render_target> render_target,
+            const VkPipelineLayoutCreateInfo* pipeline_layout_info,
+            VkGraphicsPipelineCreateInfo* pipeline_create_info);
         ~pipeline();
 
         pipeline(const pipeline&) = delete;
@@ -23,10 +28,6 @@ namespace graphics {
         NODISCARD inline VkPipeline get_pipeline() const noexcept { return m_pipeline; }
 
     private:
-        pipeline(std::shared_ptr<device> device,
-            std::shared_ptr<render_target> render_target,
-            const VkPipelineLayoutCreateInfo* pipeline_layout_info,
-            VkGraphicsPipelineCreateInfo* pipeline_create_info);
 
         std::shared_ptr<device> m_device;
         std::shared_ptr<render_target> m_render_target;
@@ -42,27 +43,14 @@ namespace graphics {
         friend class pipeline_manager;
 
     public:
+        pipeline_builder(std::shared_ptr<device> s_device, std::shared_ptr<render_target> s_render_target, pipeline_manager* pipeline_manager);
+        
         NODISCARD VkPipelineShaderStageCreateInfo create_shader_stage(
             const char* file_path, const VkShaderStageFlagBits shader_stage);
 
-        NODISCARD pipeline create_graphics_pipeline()
-        {
-            create_pipeline_layout_info();
-
-            return pipeline { m_device, m_render_target, &m_layout_info, &pipeline_create_info };
-        }
+        NODISCARD std::shared_ptr<pipeline> create_graphics_pipeline();
 
     private:
-        pipeline_builder(std::shared_ptr<device> s_device, std::shared_ptr<render_target> s_render_target)
-            : m_device(s_device)
-            , m_render_target(s_render_target)
-        {
-            pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-            pipeline_create_info.basePipelineHandle = nullptr;
-            pipeline_create_info.basePipelineIndex = -1;
-
-            init_pipeline_defaults();
-        }
 
         struct pipeline_info {
             VkPipelineVertexInputStateCreateInfo vertex_input_state;
@@ -83,6 +71,7 @@ namespace graphics {
 
         std::shared_ptr<device> m_device;
         std::shared_ptr<render_target> m_render_target;
+        pipeline_manager* m_pipeline_manager;
 
         pipeline_info info;
         VkPipelineLayoutCreateInfo m_layout_info {};

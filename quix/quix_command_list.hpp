@@ -17,7 +17,8 @@ public:
     sync(std::shared_ptr<device> s_device, std::shared_ptr<swapchain> s_swapchain);
     ~sync();
 
-    void wait_force_fence(const int frame);
+    void wait_for_fence(const int frame);
+    void reset_fence(const int frame);
     VkResult acquire_next_image(const int frame, uint32_t* image_index);
     VkResult submit_frame(const int frame, std::shared_ptr<command_list> command);
     VkResult present_frame(const int frame, const uint32_t image_index);
@@ -52,7 +53,7 @@ public:
     void begin_record(VkCommandBufferUsageFlags flags = 0);
     void end_record();
 
-    void begin_render_pass(std::shared_ptr<render_target> target, graphics::pipeline& pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count);
+    void begin_render_pass(std::shared_ptr<render_target> target, std::shared_ptr<graphics::pipeline> pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count);
     void end_render_pass();
 
 private:

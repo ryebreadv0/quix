@@ -5,13 +5,13 @@
 
 #include <memory>
 
+#include "quix_command_list.hpp"
 #include "quix_common.hpp"
 #include "quix_descriptor.hpp"
 #include "quix_device.hpp"
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"
 #include "quix_swapchain.hpp"
-#include "quix_command_list.hpp"
 
 namespace quix {
 
@@ -19,7 +19,8 @@ instance::instance(const char* app_name,
     uint32_t app_version,
     int width,
     int height)
-    : m_device(std::make_shared<device>(app_name,
+    : m_device(allocate_shared<device>(
+        app_name,
         app_version,
         "quix",
         VK_MAKE_VERSION(1, 0, 0),
@@ -38,34 +39,33 @@ void instance::create_device(std::vector<const char*>&& requested_extensions, Vk
 {
     m_device->init(std::move(requested_extensions), requested_features);
 
-    m_descriptor_allocator.reset(descriptor::allocator::init(m_device->get_logical_device()));
-    m_descriptor_layout_cache = std::make_unique<descriptor::layout_cache>();
-    m_descriptor_layout_cache->init(m_device->get_logical_device());
+    m_descriptor_allocator.reset(allocate_unique<descriptor::allocator>(m_device->get_logical_device()));
+    m_descriptor_layout_cache.reset(allocate_unique<descriptor::layout_cache>(m_device->get_logical_device()));
 }
 
 void instance::create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
 {
-    m_swapchain = std::make_shared<swapchain>(m_device, frames_in_flight, present_mode);
+    m_swapchain = allocate_shared<swapchain>(m_device, frames_in_flight, present_mode);
 }
 
 void instance::create_pipeline_manager()
 {
-    m_pipeline_manager = std::make_shared<graphics::pipeline_manager>(m_device);
+    m_pipeline_manager = allocate_shared<graphics::pipeline_manager>(m_device);
 }
 
-NODISCARD std::shared_ptr<command_pool> instance::get_command_pool() const
+NODISCARD std::shared_ptr<command_pool> instance::get_command_pool()
 {
-    return std::make_shared<command_pool>(m_device, m_device->get_command_pool());
+    return allocate_shared<command_pool>(m_device, m_device->get_command_pool());
 }
 
-NODISCARD std::shared_ptr<render_target> instance::create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) const noexcept
+NODISCARD std::shared_ptr<render_target> instance::create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) noexcept
 {
-    return std::make_shared<render_target>(m_device, m_swapchain, &render_pass_create_info);
+    return allocate_shared<render_target>(m_device, m_swapchain, &render_pass_create_info);
 }
 
-NODISCARD std::shared_ptr<sync> instance::create_sync_objects() const noexcept
+NODISCARD std::shared_ptr<sync> instance::create_sync_objects() noexcept
 {
-    return std::make_shared<sync>(m_device, m_swapchain);
+    return allocate_shared<sync>(m_device, m_swapchain);
 }
 
 void instance::wait_idle()

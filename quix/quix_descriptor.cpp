@@ -98,11 +98,9 @@ namespace descriptor {
             { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0.5f } } };
     } s_PoolSizes;
 
-    allocator* allocator::init(VkDevice device)
+    allocator::allocator(VkDevice device)
+        : device(device)
     {
-        allocator* m_allocator = new allocator();
-        m_allocator->device = device;
-        return m_allocator;
     }
 
     VkDevice allocator::getDevice()
@@ -113,11 +111,9 @@ namespace descriptor {
     allocator_pool allocator::getPool()
     {
         quix_assert(device != VK_NULL_HANDLE, "allocator class was not initialized (device is VK_NULL_HANDLE)");
-        
+
         return allocator_pool(this, borrowPool());
     }
-
-    allocator::allocator() = default;
 
     allocator::~allocator()
     {
@@ -183,9 +179,9 @@ namespace descriptor {
 
     // layoutcache class start
 
-    void layout_cache::init(VkDevice newDevice)
+    layout_cache::layout_cache(VkDevice device)
+        : device(device)
     {
-        device = newDevice;
     }
 
     layout_cache::~layout_cache()

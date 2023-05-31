@@ -64,6 +64,10 @@ private:
 
     // instance variables
     GLFWwindow* window;
+    
+    bool framebuffer_resized = false;
+    std::function<void(GLFWwindow*, int, int)> framebuffer_resized_callback;
+    
     logger m_logger;
 
 #ifdef _DEBUG
@@ -89,6 +93,7 @@ private:
 
     std::deque<VkCommandPool> m_command_pools;
     std::mutex m_command_pool_mutex;
+
 };
 
 } // namespace quix
