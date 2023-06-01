@@ -1,5 +1,6 @@
 #include "quix_command_list.hpp"
 #include "quix_descriptor.hpp"
+#include "quix_window.hpp"
 #include "quix_instance.hpp"
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"
@@ -69,7 +70,7 @@ int main()
 
     auto command_pool = instance.get_command_pool();
 
-    auto* window = instance.window();
+    auto window = instance.get_window();
 
     int current_frame = 0;
     uint32_t current_image_index = 0;
@@ -84,8 +85,8 @@ int main()
         { { 0.0f, 0.0f, 0.0f, 0.0f } }
     };
 
-    while (glfwWindowShouldClose(window) == GLFW_FALSE) {
-        glfwPollEvents();
+    while (window->should_close() == false) {
+        window->poll_events();
 
         VkResult result = sync_objects->acquire_next_image(current_frame, &current_image_index);
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {

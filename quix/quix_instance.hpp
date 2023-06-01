@@ -3,6 +3,7 @@
 
 namespace quix {
 
+class window;
 class device;
 class swapchain;
 class render_target;
@@ -39,7 +40,7 @@ public:
 
     void wait_idle();
 
-    NODISCARD GLFWwindow* window() const noexcept;
+    NODISCARD std::shared_ptr<window> get_window() const noexcept;
     NODISCARD VkDevice get_logical_device() const noexcept;
     NODISCARD VkSurfaceFormatKHR get_surface_format() const noexcept;
 
@@ -72,6 +73,7 @@ private:
 
     std::pmr::monotonic_buffer_resource m_allocator;
 
+    std::shared_ptr<window> m_window;
     std::shared_ptr<device> m_device;
     std::shared_ptr<swapchain> m_swapchain;
     std::shared_ptr<graphics::pipeline_manager> m_pipeline_manager;

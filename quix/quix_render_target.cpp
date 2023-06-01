@@ -3,6 +3,7 @@
 
 #include "quix_render_target.hpp"
 
+#include "quix_window.hpp"
 #include "quix_device.hpp"
 #include "quix_swapchain.hpp"
 
@@ -28,8 +29,8 @@ static constexpr renderpass_info<1, 1, 0> renderpass_info_default = {
     {}
 };
 
-render_target::render_target(std::shared_ptr<device> s_device, std::shared_ptr<swapchain> s_swapchain, const VkRenderPassCreateInfo* render_pass_create_info)
-    : m_device(s_device), m_swapchain(s_swapchain)
+render_target::render_target(std::shared_ptr<window> s_window,std::shared_ptr<device> s_device, std::shared_ptr<swapchain> s_swapchain, const VkRenderPassCreateInfo* render_pass_create_info)
+    : m_window(s_window), m_device(s_device), m_swapchain(s_swapchain)
 {
     create_renderpass(render_pass_create_info);
     create_framebuffers();
@@ -48,7 +49,7 @@ NODISCARD VkExtent2D render_target::get_extent() const noexcept
 
 void render_target::recreate_swapchain()
 {
-    auto* window = m_device->get_window();
+    auto* window = m_window->get_window();
     int width = 0, height = 0;
     while (width == 0 && height == 0) {
         glfwGetFramebufferSize(window, &width, &height);

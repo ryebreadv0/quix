@@ -10,6 +10,7 @@ project(quix)
 
 add_library(${PROJECT_NAME} 
     quix/quix_instance.cpp
+    quix/quix_window.cpp
     quix/quix_device.cpp
     quix/quix_logger.cpp
     quix/quix_swapchain.cpp

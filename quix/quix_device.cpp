@@ -3,16 +3,17 @@
 
 #include "quix_device.hpp"
 
+#include "quix_window.hpp"
+
 namespace quix {
 
-device::device(const char* app_name,
+device::device(std::shared_ptr<window> s_window,
+    const char* app_name,
     uint32_t app_version,
     const char* engine_name,
-    uint32_t engine_version,
-    int width,
-    int height)
+    uint32_t engine_version)
     : m_logger("device", spdlog::level::trace)
-    , window(nullptr)
+    , m_window(s_window)
 {
     m_logger.add_sink(std::make_shared<spdlog::sinks::basic_file_sink_mt>(
         "logs/device.log", true));
@@ -25,12 +26,12 @@ device::device(const char* app_name,
     glslang::InitializeProcess();
     m_logger.trace("glslang initialized");
 
-    auto result = glfwInit();
-    quix_assert(result != GLFW_FALSE, "failed to initialize GLFW");
+    // auto result = glfwInit();
+    // quix_assert(result != GLFW_FALSE, "failed to initialize GLFW");
 
     create_instance(app_name, app_version, engine_name, engine_version);
 
-    create_window(app_name, width, height);
+    // create_window(app_name, width, height);
 }
 
 device::~device()
@@ -55,14 +56,14 @@ device::~device()
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
     m_logger.trace("surface destroyed");
 
-    glfwDestroyWindow(window);
-    m_logger.trace("window destroyed");
+    // glfwDestroyWindow(window);
+    // m_logger.trace("window destroyed");
 
     vkDestroyInstance(m_instance, nullptr);
     m_logger.trace("instance destroyed");
 
-    glfwTerminate();
-    m_logger.trace("GLFW terminated");
+    // glfwTerminate();
+    // m_logger.trace("GLFW terminated");
 
     glslang::FinalizeProcess();
     m_logger.trace("glslang finalized");
@@ -162,32 +163,30 @@ void device::create_instance(const char* app_name,
     m_logger.trace("instance created");
 }
 
-void device::create_window(const char* app_name,
-    int width,
-    int height)
-{
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+// void device::create_window(const char* app_name,
+//     int width,
+//     int height)
+// {
+//     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+//     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    window = glfwCreateWindow(width, height, app_name, nullptr, nullptr);
+//     window = glfwCreateWindow(width, height, app_name, nullptr, nullptr);
 
-    quix_assert(window != nullptr, "failed to create GLFW window");
+//     quix_assert(window != nullptr, "failed to create GLFW window");
 
-    glfwSetWindowUserPointer(window, this);
+//     glfwSetWindowUserPointer(window, this);
 
-    glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height){
-        auto* ptr = reinterpret_cast<device*>(glfwGetWindowUserPointer(window));
-        ptr->framebuffer_resized = true;
-    });
-    
-    m_logger.trace("window created");
-}
+//     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
+//         auto* ptr = reinterpret_cast<device*>(glfwGetWindowUserPointer(window));
+//         ptr->framebuffer_resized = true;
+//     });
+
+//     m_logger.trace("window created");
+// }
 
 void device::create_surface()
 {
-    VK_CHECK(glfwCreateWindowSurface(m_instance, window, nullptr, &m_surface), "failed to create window surface");
-
-    m_logger.trace("surface created");
+    m_window->get_surface(m_instance, &m_surface);
 }
 
 queue_family_indices
@@ -228,7 +227,7 @@ device::find_queue_families(VkPhysicalDevice physical_device)
     }
 
     quix_assert(indices.is_complete(), "failed to find queue families");
-    
+
     return indices;
 }
 

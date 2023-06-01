@@ -5,18 +5,18 @@
 
 namespace quix {
 
+class window;
 class swapchain;
 
 class device {
     friend class swapchain;
 
 public:
-    device(const char* app_name,
+    device(std::shared_ptr<window> s_window,
+        const char* app_name,
         uint32_t app_version,
         const char* engine_name,
-        uint32_t engine_version,
-        int width,
-        int height);
+        uint32_t engine_version);
 
     ~device();
 
@@ -27,7 +27,7 @@ public:
     device(device&&) = delete;
     device& operator=(device&&) = delete;
 
-    NODISCARD inline GLFWwindow* get_window() const noexcept { return window; }
+    // NODISCARD inline GLFWwindow* get_window() const noexcept { return window; }
     NODISCARD inline spdlog::sink_ptr get_sink() const noexcept { return m_logger.get_sink(0); }
     NODISCARD inline VkPhysicalDevice get_physical_device() const noexcept { return m_physical_device; }
     NODISCARD inline VkSurfaceKHR get_surface() const noexcept { return m_surface; }
@@ -47,7 +47,7 @@ private:
         uint32_t app_version,
         const char* engine_name,
         uint32_t engine_version);
-    void create_window(const char* app_name, int width, int height);
+    // void create_window(const char* app_name, int width, int height);
     void create_surface();
 
     queue_family_indices find_queue_families(VkPhysicalDevice physical_device);
@@ -63,11 +63,13 @@ private:
     void create_allocator();
 
     // instance variables
-    GLFWwindow* window;
-    
-    bool framebuffer_resized = false;
-    std::function<void(GLFWwindow*, int, int)> framebuffer_resized_callback;
-    
+
+    std::shared_ptr<window> m_window;
+    // GLFWwindow* window;
+
+    // bool framebuffer_resized = false;
+    // std::function<void(GLFWwindow*, int, int)> framebuffer_resized_callback;
+
     logger m_logger;
 
 #ifdef _DEBUG
@@ -93,7 +95,6 @@ private:
 
     std::deque<VkCommandPool> m_command_pools;
     std::mutex m_command_pool_mutex;
-
 };
 
 } // namespace quix

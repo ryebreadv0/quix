@@ -5,12 +5,14 @@
 
 #include "quix_common.hpp"
 #include "quix_instance.hpp"
+#include "quix_window.hpp"
 #include "quix_device.hpp"
 
 namespace quix {
 
-swapchain::swapchain(std::shared_ptr<device> p_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
-    : m_device(p_device)
+swapchain::swapchain(std::shared_ptr<window> s_window, std::shared_ptr<device> s_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
+    : m_window(s_window)
+    , m_device(s_device)
     , m_frames_in_flight(frames_in_flight)
     , m_present_mode(present_mode)
     , m_logger("swapchain")
@@ -39,7 +41,7 @@ void swapchain::recreate_swapchain()
 
     destroy_image_views();
     m_swapchain_image_views.clear();
-    
+
     create_image_views();
 
     vkDestroySwapchainKHR(m_device->get_logical_device(), old_swapchain, nullptr);
@@ -169,7 +171,7 @@ NODISCARD VkExtent2D swapchain::choose_swap_extent(const VkSurfaceCapabilitiesKH
         return capabilities.currentExtent;
     } else {
         int width, height;
-        glfwGetFramebufferSize(m_device->get_window(), &width, &height);
+        glfwGetFramebufferSize(m_window->get_window(), &width, &height);
 
         VkExtent2D actualExtent = {
             static_cast<uint32_t>(width),
