@@ -11,9 +11,6 @@ window::window(const char* title, int width, int height)
     , key_callback(nullptr)
     , cursor_callback(nullptr)
     , mouse_button_callback(nullptr)
-    , key_callback_enabled(false)
-    , cursor_callback_enabled(false)
-    , mouse_button_callback_enabled(false)
 {
     quix_assert(glfwInit() != GLFW_FALSE, "failed to initialize GLFW");
 
@@ -46,7 +43,6 @@ void window::enable_key_callback()
             instance->key_callback(p_window, key, scancode, action, mods);
         }
     });
-    key_callback_enabled = true;
 }
 
 void window::enable_cursor_callback()
@@ -57,7 +53,6 @@ void window::enable_cursor_callback()
             instance->cursor_callback(p_window, xpos, ypos);
         }
     });
-    cursor_callback_enabled = true;
 }
 
 void window::enable_mouse_button_callback()
@@ -68,7 +63,6 @@ void window::enable_mouse_button_callback()
             instance->mouse_button_callback(p_window, button, action, mods);
         }
     });
-    mouse_button_callback_enabled = true;
 }
 
 } // namespace quix
