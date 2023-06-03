@@ -47,8 +47,8 @@ public:
     command_list(command_list&&) = delete;
     command_list& operator=(command_list&&) = delete;
 
-    NODISCARD inline VkCommandBuffer get_buffer() const noexcept { return buffer; }
-    NODISCARD inline VkCommandBuffer* get_buffer_ref() { return &buffer; }
+    NODISCARD inline VkCommandBuffer get_cmd_buffer() const noexcept { return buffer; }
+    NODISCARD inline VkCommandBuffer* get_cmd_buffer_ref() { return &buffer; }
 
     void begin_record(VkCommandBufferUsageFlags flags = 0);
     void end_record();

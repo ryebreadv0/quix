@@ -101,7 +101,7 @@ int main()
 
         command_lists[current_frame]->begin_render_pass(render_target, pipeline, current_image_index, clear_values.data(), clear_values.size());
 
-        vkCmdDraw(command_lists[current_frame]->get_buffer(), 3, 1, 0, 0);
+        vkCmdDraw(command_lists[current_frame]->get_cmd_buffer(), 3, 1, 0, 0);
 
         command_lists[current_frame]->end_render_pass();
 
@@ -111,7 +111,7 @@ int main()
 
         result = sync_objects->present_frame(current_frame, current_image_index);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->get_framebuffer_resized())
             render_target->recreate_swapchain();
         else if (result != VK_SUCCESS)
             quix_error("failed to present swapchain image");

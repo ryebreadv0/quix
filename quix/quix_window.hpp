@@ -33,23 +33,23 @@ public:
         }
     }
 
-    inline void set_key_callback(std::function<void(GLFWwindow*, int, int, int, int)> callback)
+    inline void set_key_callback(std::function<void(GLFWwindow*, int, int, int, int)> callback) noexcept
     {
-        if (key_callback_enabled == false)
+        if (key_callback == nullptr)
             enable_key_callback();
         key_callback = callback;
     }
     
-    inline void set_cursor_callback(std::function<void(GLFWwindow*, double, double)> callback)
+    inline void set_cursor_callback(std::function<void(GLFWwindow*, double, double)> callback) noexcept
     {
-        if (cursor_callback_enabled == false)
+        if (cursor_callback == nullptr)
             enable_cursor_callback();
         cursor_callback = callback;
     }
 
-    inline void set_mouse_button_callback(std::function<void(GLFWwindow*, int, int, int)> callback)
+    inline void set_mouse_button_callback(std::function<void(GLFWwindow*, int, int, int)> callback) noexcept
     {
-        if (mouse_button_callback_enabled == false)
+        if (mouse_button_callback == nullptr)
             enable_mouse_button_callback();
         mouse_button_callback = callback;
     }
@@ -67,13 +67,9 @@ private:
     bool framebuffer_resized;
     GLFWwindow* m_window;
 
-    bool key_callback_enabled;
-    bool cursor_callback_enabled;
-    bool mouse_button_callback_enabled;
-
-    std::function<void(GLFWwindow*, int, int, int, int)> key_callback;
-    std::function<void(GLFWwindow*, double, double)> cursor_callback;
-    std::function<void(GLFWwindow*, int, int, int)> mouse_button_callback;
+    std::function<void(GLFWwindow*, int, int, int, int)> key_callback = nullptr;
+    std::function<void(GLFWwindow*, double, double)> cursor_callback = nullptr;
+    std::function<void(GLFWwindow*, int, int, int)> mouse_button_callback = nullptr;
 };
 
 } // namespace quix

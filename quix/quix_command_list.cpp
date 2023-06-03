@@ -51,7 +51,7 @@ VkResult sync::submit_frame(const int frame, std::shared_ptr<command_list> comma
     submitInfo.pWaitDstStageMask = waitStages;
 
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = command->get_buffer_ref();
+    submitInfo.pCommandBuffers = command->get_cmd_buffer_ref();
 
     VkSemaphore signalSemaphores[] = { m_finished_semaphores[frame] };
     submitInfo.signalSemaphoreCount = 1;
