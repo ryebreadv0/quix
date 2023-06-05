@@ -27,8 +27,6 @@ public:
     device(device&&) = delete;
     device& operator=(device&&) = delete;
 
-    // NODISCARD inline GLFWwindow* get_window() const noexcept { return window; }
-    NODISCARD inline spdlog::sink_ptr get_sink() const noexcept { return m_logger.get_sink(0); }
     NODISCARD inline VkPhysicalDevice get_physical_device() const noexcept { return m_physical_device; }
     NODISCARD inline VkSurfaceKHR get_surface() const noexcept { return m_surface; }
     NODISCARD inline VkDevice get_logical_device() const noexcept { return m_logical_device; }
@@ -47,7 +45,7 @@ private:
         uint32_t app_version,
         const char* engine_name,
         uint32_t engine_version);
-    // void create_window(const char* app_name, int width, int height);
+
     void create_surface();
 
     queue_family_indices find_queue_families(VkPhysicalDevice physical_device);
@@ -65,12 +63,6 @@ private:
     // instance variables
 
     std::shared_ptr<window> m_window;
-    // GLFWwindow* window;
-
-    // bool framebuffer_resized = false;
-    // std::function<void(GLFWwindow*, int, int)> framebuffer_resized_callback;
-
-    logger m_logger;
 
 #ifdef _DEBUG
     bool initialized = false;

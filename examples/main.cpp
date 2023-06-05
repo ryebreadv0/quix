@@ -1,13 +1,57 @@
 #include "quix_command_list.hpp"
 #include "quix_descriptor.hpp"
-#include "quix_window.hpp"
 #include "quix_instance.hpp"
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"
+#include "quix_window.hpp"
+#include <vulkan/vulkan_core.h>
 
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
 static constexpr int FRAMES_IN_FLIGHT = 2;
+
+struct vec3 {
+    union {
+        struct {
+            float x, y, z;
+        };
+        float data[3];
+    };
+    NODISCARD inline float operator[](int index) const noexcept { return data[index]; }
+};
+
+struct Vertex {
+    vec3 pos;
+    vec3 color;
+
+    static constexpr std::array<VkVertexInputBindingDescription, 1> get_binding_description()
+    {
+        return {
+            VkVertexInputBindingDescription {
+                .binding = 0,
+                .stride = sizeof(Vertex),
+                .inputRate = VK_VERTEX_INPUT_RATE_VERTEX }
+        };
+    }
+
+    static constexpr std::array<VkVertexInputAttributeDescription, 2> get_attribute_description()
+    {
+        return {
+            VkVertexInputAttributeDescription {
+                .location = 0,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32B32_SFLOAT,
+                .offset = offsetof(Vertex, pos) 
+            },
+            VkVertexInputAttributeDescription {
+                .location = 1,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32B32_SFLOAT,
+                .offset = offsetof(Vertex, color) 
+            }
+        };
+    }
+};
 
 int main()
 {
@@ -53,6 +97,9 @@ int main()
     auto pipeline_manager = instance.get_pipeline_manager();
     auto pipeline_builder = pipeline_manager->create_pipeline_builder(render_target);
 
+    auto vertex_binding_description = Vertex::get_binding_description();
+    auto vertex_attribute_description = Vertex::get_attribute_description();
+
     auto shader_stages = pipeline_builder->create_shader_array(
         pipeline_builder->create_shader_stage("examples/simpleshader.vert", VK_SHADER_STAGE_VERTEX_BIT),
         pipeline_builder->create_shader_stage("examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
@@ -64,6 +111,7 @@ int main()
                                      .buildLayout();
 
     auto pipeline = pipeline_builder->add_shader_stages(shader_stages)
+                        .create_vertex_state(vertex_binding_description.data(),vertex_binding_description.size(), vertex_attribute_description.data(), vertex_attribute_description.size())
                         .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
                         .add_descriptor_set_layout(descriptor_set_layout)
                         .create_graphics_pipeline();

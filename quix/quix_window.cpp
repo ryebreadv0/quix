@@ -24,7 +24,7 @@ window::window(const char* title, int width, int height)
     glfwSetWindowUserPointer(m_window, this);
 
     glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* p_window, int width, int height) {
-        auto* instance = reinterpret_cast<window*>(glfwGetWindowUserPointer(p_window));
+        auto* instance = static_cast<window*>(glfwGetWindowUserPointer(p_window));
         instance->framebuffer_resized = true;
     });
 }
@@ -38,7 +38,7 @@ window::~window()
 void window::enable_key_callback()
 {
     glfwSetKeyCallback(m_window, [](GLFWwindow* p_window, int key, int scancode, int action, int mods) {
-        auto* instance = reinterpret_cast<window*>(glfwGetWindowUserPointer(p_window));
+        auto* instance = static_cast<window*>(glfwGetWindowUserPointer(p_window));
         if (instance->key_callback) {
             instance->key_callback(p_window, key, scancode, action, mods);
         }
@@ -48,7 +48,7 @@ void window::enable_key_callback()
 void window::enable_cursor_callback()
 {
     glfwSetCursorPosCallback(m_window, [](GLFWwindow* p_window, double xpos, double ypos) {
-        auto* instance = reinterpret_cast<window*>(glfwGetWindowUserPointer(p_window));
+        auto* instance = static_cast<window*>(glfwGetWindowUserPointer(p_window));
         if (instance->cursor_callback) {
             instance->cursor_callback(p_window, xpos, ypos);
         }
@@ -58,7 +58,7 @@ void window::enable_cursor_callback()
 void window::enable_mouse_button_callback()
 {
     glfwSetMouseButtonCallback(m_window, [](GLFWwindow* p_window, int button, int action, int mods) {
-        auto* instance = reinterpret_cast<window*>(glfwGetWindowUserPointer(p_window));
+        auto* instance = static_cast<window*>(glfwGetWindowUserPointer(p_window));
         if (instance->mouse_button_callback) {
             instance->mouse_button_callback(p_window, button, action, mods);
         }

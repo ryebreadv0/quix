@@ -22,7 +22,7 @@ private:
     const std::string getSourceCode(const char* path);
     void loadSpvCode(const char* path);
     void saveSpvCode(const char* path);
-    bool ends_with(const char* str, const char* suffix);
+    static bool ends_with(const char* str, const char* suffix);
 
     std::vector<uint32_t> code;
 };

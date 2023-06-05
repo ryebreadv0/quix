@@ -4,6 +4,7 @@
 #include "quix_device.hpp"
 
 #include "quix_window.hpp"
+#include <spdlog/fmt/bundled/core.h>
 
 namespace quix {
 
@@ -12,19 +13,10 @@ device::device(std::shared_ptr<window> s_window,
     uint32_t app_version,
     const char* engine_name,
     uint32_t engine_version)
-    : m_logger("device", spdlog::level::trace)
-    , m_window(s_window)
+    : m_window(s_window)
 {
-    m_logger.add_sink(std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-        "logs/device.log", true));
-
-    m_logger.set_level(spdlog::level::trace);
-    m_logger.set_pattern();
-
-    m_logger.trace("device class created");
 
     glslang::InitializeProcess();
-    m_logger.trace("glslang initialized");
 
     // auto result = glfwInit();
     // quix_assert(result != GLFW_FALSE, "failed to initialize GLFW");
@@ -38,37 +30,23 @@ device::~device()
 {
 #ifdef _DEBUG
     if (initialized != true) {
-        m_logger.error("device was never initialized");
+        spdlog::error("error device not initialized\n");
     }
 #endif
 
     for (auto& pool : m_command_pools) {
         vkDestroyCommandPool(m_logical_device, pool, nullptr);
     }
-    m_logger.trace("command pools destroyed");
 
     vmaDestroyAllocator(m_allocator);
-    m_logger.trace("VMA allocator destroyed");
 
     vkDestroyDevice(m_logical_device, nullptr);
-    m_logger.trace("logical device destroyed");
 
     vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-    m_logger.trace("surface destroyed");
-
-    // glfwDestroyWindow(window);
-    // m_logger.trace("window destroyed");
 
     vkDestroyInstance(m_instance, nullptr);
-    m_logger.trace("instance destroyed");
-
-    // glfwTerminate();
-    // m_logger.trace("GLFW terminated");
 
     glslang::FinalizeProcess();
-    m_logger.trace("glslang finalized");
-
-    m_logger.trace("device class destroyed");
 }
 
 void device::init(std::vector<const char*>&& requested_extensions, VkPhysicalDeviceFeatures requested_features)
@@ -81,7 +59,7 @@ void device::init(std::vector<const char*>&& requested_extensions, VkPhysicalDev
     this->requested_extensions = std::move(requested_extensions);
     this->requested_features = requested_features;
 
-    m_logger.info("requested extensions: {}", requested_extensions.size());
+    spdlog::info("requested extensions: {}\n", requested_extensions.size());
 
     create_surface();
 
@@ -96,7 +74,6 @@ NODISCARD VkCommandPool device::get_command_pool()
 {
     if (m_command_pools.empty()) {
         quix_assert(m_queue_family_indices.has_value(), "queue family indices not initialized");
-        m_logger.trace("creating command pool");
         VkCommandPoolCreateInfo pool_info = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
             .pNext = nullptr,
@@ -106,7 +83,7 @@ NODISCARD VkCommandPool device::get_command_pool()
 
         VkCommandPool pool = VK_NULL_HANDLE;
         VK_CHECK(vkCreateCommandPool(m_logical_device, &pool_info, nullptr, &pool), "failed to create command pool");
-        m_logger.trace("command pool created");
+        
 
         return pool;
     }
@@ -115,7 +92,6 @@ NODISCARD VkCommandPool device::get_command_pool()
     VkCommandPool pool = m_command_pools.front();
     m_command_pools.pop_front();
 
-    m_logger.trace("command pool retrieved");
 
     return pool;
 }
@@ -127,7 +103,6 @@ void device::return_command_pool(VkCommandPool command_pool)
         vkResetCommandPool(m_logical_device, command_pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
         m_command_pools.push_back(command_pool);
     }
-    m_logger.trace("command pool returned");
 }
 
 void device::create_instance(const char* app_name,
@@ -160,29 +135,7 @@ void device::create_instance(const char* app_name,
     };
 
     VK_CHECK(vkCreateInstance(&create_info, nullptr, &m_instance), "failed to create vulkan instance");
-    m_logger.trace("instance created");
 }
-
-// void device::create_window(const char* app_name,
-//     int width,
-//     int height)
-// {
-//     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-//     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-//     window = glfwCreateWindow(width, height, app_name, nullptr, nullptr);
-
-//     quix_assert(window != nullptr, "failed to create GLFW window");
-
-//     glfwSetWindowUserPointer(window, this);
-
-//     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
-//         auto* ptr = reinterpret_cast<device*>(glfwGetWindowUserPointer(window));
-//         ptr->framebuffer_resized = true;
-//     });
-
-//     m_logger.trace("window created");
-// }
 
 void device::create_surface()
 {
@@ -429,18 +382,14 @@ int device::rate_physical_device(VkPhysicalDevice physical_device)
         score += 1;
         break;
     default:
-        m_logger.error("Unknown device type: {}", properties.deviceType);
+        spdlog::warn("Unknown device type: {}\n", properties.deviceType);
         score = 0;
         return score;
         break;
     }
 
-#ifdef _DEBUG
-    m_logger.trace("Device: {} score: {}", properties.deviceName, score);
-    // m_logger.trace("Device memory score {}",
-    //     (static_cast<double>(deviceMemory) / memory_score_divider * memory_score_multiplier));
-#endif
-
+    spdlog::trace("Device: {} score: {}\n", properties.deviceName, score);
+    
     return score;
 }
 
@@ -458,7 +407,7 @@ void device::pick_physical_device()
 
     std::multimap<int, VkPhysicalDevice> deviceRatings;
 
-    m_logger.trace("Found {} devices", deviceCount);
+    spdlog::info("Found {} devices\n", deviceCount);
 
     // rate physicalDevice
     for (int i = 0; i < deviceCount; i++) {
@@ -466,17 +415,18 @@ void device::pick_physical_device()
         deviceRatings.insert(std::make_pair(score, devices[i]));
     }
 
-    for (auto& deviceRating : std::ranges::reverse_view(deviceRatings)) {
+    for (auto it = deviceRatings.rbegin(); it != deviceRatings.rend(); ++it) {
+        auto& deviceRating = *it;
         if (is_physical_device_suitable(deviceRating.second)) {
             if (deviceRating.first <= 0) {
-                m_logger.warn("Device has a score of {} which means it does not support requested features", deviceRating.first);
+                spdlog::warn("[WARNING] Device has a score of {} which means it does not support requested features\n", deviceRating.first);
                 continue;
             }
 
             m_physical_device = deviceRating.second;
             m_queue_family_indices = find_queue_families(m_physical_device);
 
-            m_logger.trace("Using device with score of {}", deviceRating.first);
+            spdlog::info("Using device with score of {}\n", deviceRating.first);
 
             // maxMsaa = getMaxUsableSampleCount();
             break;
@@ -485,7 +435,6 @@ void device::pick_physical_device()
 
     quix_assert(m_physical_device != VK_NULL_HANDLE, "failed to find a suitable GPU");
 
-    m_logger.trace("selected physical device");
 }
 
 void device::create_logical_device()
@@ -520,12 +469,9 @@ void device::create_logical_device()
 
     VK_CHECK(vkCreateDevice(m_physical_device, &createInfo, nullptr, &m_logical_device), "failed to create a logical device");
 
-    m_logger.trace("created logical device");
-
     vkGetDeviceQueue(m_logical_device, indices.graphics_family.value(), 0, &m_graphics_queue);
     vkGetDeviceQueue(m_logical_device, indices.present_family.value(), 0, &m_present_queue);
 
-    m_logger.trace("retrieved device queues");
 }
 
 void device::create_allocator()
@@ -538,7 +484,6 @@ void device::create_allocator()
 
     VK_CHECK(vmaCreateAllocator(&allocatorInfo, &m_allocator), "failed to create VMA allocator");
 
-    m_logger.trace("created allocator");
 }
 
 } // namespace quix

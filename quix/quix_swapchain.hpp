@@ -42,15 +42,14 @@ private:
     std::shared_ptr<window> m_window;
     std::shared_ptr<device> m_device;
 
-    const int32_t m_frames_in_flight;
-    const VkPresentModeKHR m_present_mode;
-    logger m_logger;
+    int32_t m_frames_in_flight;
+    VkPresentModeKHR m_present_mode;
 
-    VkSwapchainKHR m_swapchain;
-    std::vector<VkImage> m_swapchain_images;
-    std::vector<VkImageView> m_swapchain_image_views;
-    VkSurfaceFormatKHR m_swapchain_surface_format;
-    VkExtent2D m_swapchain_extent;
+    VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
+    std::vector<VkImage> m_swapchain_images{};
+    std::vector<VkImageView> m_swapchain_image_views{};
+    VkSurfaceFormatKHR m_swapchain_surface_format{};
+    VkExtent2D m_swapchain_extent{};
 };
 
 } // namespace quix

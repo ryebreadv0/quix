@@ -29,7 +29,7 @@ public:
 
     std::shared_ptr<spdlog::logger>& get_logger();
 
-    auto& get_sink(uint32_t index) const {
+    NODISCARD auto& get_sink(uint32_t index) const {
         return m_logger->sinks()[index];
     }
 

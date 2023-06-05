@@ -26,14 +26,14 @@ shader::shader(const char* path, EShLanguage stage)
     }
 
     // see if spv file exists and if it is newer than the shader file
-    struct stat shaderStat;
-    struct stat spvStat;
+    struct stat shaderStat { };
+    struct stat spvStat { };
 
     std::string spvPath = std::string(path) + ".spv";
     const char* cSpvPath = spvPath.c_str();
 
-    quix_assert(stat(path, &shaderStat) != -1, std::format("Error in {} shader file does not exist!", path));
-    
+    quix_assert(stat(path, &shaderStat) != -1, fmt::format("Error in {} shader file does not exist!", path));
+
     if (stat(cSpvPath, &spvStat) == -1) {
 #ifdef _DEBUG
         spdlog::info("No spv found, generating spv file for {}", path);
@@ -76,7 +76,7 @@ void shader::loadSpvCode(const char* file)
 {
     FILE* handle = fopen(file, "rb");
     quix_assert(handle != nullptr, "failed to open file");
-    
+
     fseek(handle, 0, SEEK_END);
     size_t fileSize = ftell(handle);
     fseek(handle, 0, SEEK_SET);
@@ -143,11 +143,11 @@ void shader::compileShader(EShLanguage stage, const char* path, const char* cSpv
     const char* cSource = source.c_str();
     shader.setStrings(&cSource, 1);
 
-    quix_assert(shader.parse(resources, 100, false, EShMsgDefault), std::format("Error in {} {}", path, shader.getInfoLog()));
+    quix_assert(shader.parse(resources, 100, false, EShMsgDefault), fmt::format("Error in {} {}", path, shader.getInfoLog()));
 
     program.addShader(&shader);
 
-    quix_assert(program.link(EShMsgDefault), std::format("Error in {} {}", path, program.getInfoLog()));
+    quix_assert(program.link(EShMsgDefault), fmt::format("Error in {} {}", path, program.getInfoLog()));
 
     glslang::GlslangToSpv(*program.getIntermediate(stage), code);
 
@@ -156,16 +156,17 @@ void shader::compileShader(EShLanguage stage, const char* path, const char* cSpv
 
     spvtools::Optimizer optimizer(SPV_ENV_UNIVERSAL_1_3);
     optimizer.SetMessageConsumer([](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message) {
-        if (level == SPV_MSG_FATAL || level == SPV_MSG_INTERNAL_ERROR)
-            quix_error(std::format("fatal error: {}", message));
-        else if (level == SPV_MSG_ERROR)
+        if (level == SPV_MSG_FATAL || level == SPV_MSG_INTERNAL_ERROR) {
+            quix_error(fmt::format("fatal error: {}", message));
+        } else if (level == SPV_MSG_ERROR) {
             spdlog::error("{}: {}", position.index, message);
-        else if (level == SPV_MSG_WARNING)
+        } else if (level == SPV_MSG_WARNING) {
             spdlog::warn("{}: {}", position.index, message);
-        else if (level == SPV_MSG_INFO)
+        } else if (level == SPV_MSG_INFO) {
             spdlog::info("{}: {}", position.index, message);
-        else if (level == SPV_MSG_DEBUG)
+        } else if (level == SPV_MSG_DEBUG) {
             spdlog::debug("{}: {}", position.index, message);
+        }
     });
 
     optimizer.RegisterLegalizationPasses();
@@ -184,21 +185,22 @@ void shader::compileShader(EShLanguage stage, const char* path, const char* cSpv
 
     spvtools::SpirvTools core(SPV_ENV_UNIVERSAL_1_3);
     core.SetMessageConsumer([](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message) {
-        if (level == SPV_MSG_FATAL || level == SPV_MSG_INTERNAL_ERROR)
-            quix_error(std::format("fatal error, {}", message));
-        else if (level == SPV_MSG_ERROR)
+        if (level == SPV_MSG_FATAL || level == SPV_MSG_INTERNAL_ERROR) {
+            quix_error(fmt::format("fatal error, {}", message));
+        } else if (level == SPV_MSG_ERROR) {
             spdlog::error("{}: {}", position.index, message);
-        else if (level == SPV_MSG_WARNING)
+        } else if (level == SPV_MSG_WARNING) {
             spdlog::warn("{}: {}", position.index, message);
-        else if (level == SPV_MSG_INFO)
+        } else if (level == SPV_MSG_INFO) {
             spdlog::info("{}: {}", position.index, message);
-        else if (level == SPV_MSG_DEBUG)
+        } else if (level == SPV_MSG_DEBUG) {
             spdlog::debug("{}: {}", position.index, message);
+        }
     });
 
     bool validationResult = core.Validate(code);
 
-    quix_assert(validationResult == true, std::format("error in {}", path));
+    quix_assert(validationResult == true, fmt::format("error in {}", path));
 
     // save the spv code to a file
     saveSpvCode(cSpvPath);
@@ -207,13 +209,13 @@ void shader::compileShader(EShLanguage stage, const char* path, const char* cSpv
 const std::string shader::getSourceCode(const char* path)
 {
     FILE* file = fopen(path, "r");
-    quix_assert(file != nullptr, std::format("failed to open file {}", path));
-    
+    quix_assert(file != nullptr, fmt::format("failed to open file {}", path));
+
     spdlog::trace("Reading shader {}", path);
-    
-    fseek(file, 0, SEEK_END);
+
+    (void)fseek(file, 0, SEEK_END);
     size_t fileSize = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    (void)fseek(file, 0, SEEK_SET);
 
     std::string source;
     source.resize(fileSize);

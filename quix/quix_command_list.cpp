@@ -3,6 +3,9 @@
 
 #include "quix_command_list.hpp"
 
+#include <utility>
+#include <vulkan/vulkan_core.h>
+
 #include "quix_device.hpp"
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"
@@ -11,9 +14,9 @@
 namespace quix {
 
 sync::sync(std::shared_ptr<device> s_device, std::shared_ptr<swapchain> s_swapchain)
-    : m_device(s_device)
-    , m_swapchain(s_swapchain)
-    , m_frames_in_flight(s_swapchain->get_frames_in_flight())
+    : m_device(std::move(s_device))
+    , m_swapchain(std::move(s_swapchain))
+    , m_frames_in_flight(m_swapchain->get_frames_in_flight())
 {
     create_sync_objects();
 }
@@ -112,7 +115,7 @@ void sync::destroy_sync_objects()
 }
 
 command_list::command_list(std::shared_ptr<device> s_device, VkCommandBuffer buffer)
-    : m_device(s_device)
+    : m_device(std::move(s_device))
     , buffer(buffer)
 {
 }
@@ -124,7 +127,7 @@ void command_list::begin_record(VkCommandBufferUsageFlags flags)
         /*VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT: The command buffer will be rerecorded right after executing it once.
           VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT: This is a secondary command buffer that will be entirely within a single render pass.
           VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT: The command buffer can be resubmitted while it is also already pending execution. */
-        .flags = 0,
+        .flags = flags,
         .pInheritanceInfo = nullptr // for secondary command buffers
     };
 
@@ -136,7 +139,7 @@ void command_list::end_record()
     VK_CHECK(vkEndCommandBuffer(buffer), "failed to record command buffer!");
 }
 
-void command_list::begin_render_pass(std::shared_ptr<render_target> target, std::shared_ptr<graphics::pipeline> pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count)
+void command_list::begin_render_pass(const std::shared_ptr<render_target>& target, const std::shared_ptr<graphics::pipeline>& pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count)
 {
     VkRenderPassBeginInfo render_pass_begin_info {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -177,8 +180,19 @@ void command_list::end_render_pass()
     vkCmdEndRenderPass(buffer);
 }
 
+void command_list::copy_buffer_to_buffer(VkBuffer src_buffer, VkDeviceSize src_offset, VkBuffer dst_buffer, VkDeviceSize dst_offset, VkDeviceSize size)
+{
+    VkBufferCopy copyRegion{
+        .srcOffset = src_offset,
+        .dstOffset = dst_offset,
+        .size = size,
+    };
+    
+    vkCmdCopyBuffer(buffer, src_buffer, dst_buffer, 1, &copyRegion);
+}
+
 command_pool::command_pool(std::shared_ptr<device> s_device, VkCommandPool pool)
-    : m_device(s_device)
+    : m_device(std::move(s_device))
     , pool(pool)
 {
 }
@@ -188,15 +202,16 @@ command_pool::~command_pool()
     m_device->return_command_pool(pool);
 }
 
-NODISCARD std::shared_ptr<command_list> command_pool::create_command_list() const
+NODISCARD std::shared_ptr<command_list> command_pool::create_command_list(VkCommandBufferLevel level) const
 {
-    VkCommandBufferAllocateInfo alloc_info {};
-    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    alloc_info.commandPool = pool;
-    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    alloc_info.commandBufferCount = 1;
+    VkCommandBufferAllocateInfo alloc_info {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool = pool,
+        .level = level,
+        .commandBufferCount = 1
+    };
 
-    VkCommandBuffer buffer;
+    VkCommandBuffer buffer = VK_NULL_HANDLE;
     vkAllocateCommandBuffers(m_device->get_logical_device(), &alloc_info, &buffer);
 
     return std::make_shared<command_list>(m_device, buffer);

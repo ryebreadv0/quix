@@ -30,7 +30,7 @@ static constexpr renderpass_info<1, 1, 0> renderpass_info_default = {
 };
 
 render_target::render_target(std::shared_ptr<window> s_window,std::shared_ptr<device> s_device, std::shared_ptr<swapchain> s_swapchain, const VkRenderPassCreateInfo* render_pass_create_info)
-    : m_window(s_window), m_device(s_device), m_swapchain(s_swapchain)
+    : m_window(std::move(s_window)), m_device(std::move(s_device)), m_swapchain(std::move(s_swapchain))
 {
     create_renderpass(render_pass_create_info);
     create_framebuffers();
@@ -50,7 +50,8 @@ NODISCARD VkExtent2D render_target::get_extent() const noexcept
 void render_target::recreate_swapchain()
 {
     auto* window = m_window->get_window();
-    int width = 0, height = 0;
+    int width = 0;
+    int height = 0;
     while (width == 0 && height == 0) {
         glfwGetFramebufferSize(window, &width, &height);
         glfwWaitEvents();

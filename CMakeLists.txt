@@ -19,6 +19,7 @@ add_library(${PROJECT_NAME}
     quix/quix_descriptor.cpp
     quix/quix_render_target.cpp
     quix/quix_command_list.cpp
+    quix/quix_resource.cpp
 )
 
 target_precompile_headers(${PROJECT_NAME} 

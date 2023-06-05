@@ -17,7 +17,7 @@ public:
     window(window&&) = delete;
     window& operator=(window&&) = delete;
 
-    inline bool should_close() const { return glfwWindowShouldClose(m_window); }
+    NODISCARD inline bool should_close() const { return glfwWindowShouldClose(m_window); }
     inline void poll_events() const { glfwPollEvents(); }
     inline void wait_events() const { glfwWaitEvents(); }
 

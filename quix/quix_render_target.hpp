@@ -56,7 +56,7 @@ private:
     std::shared_ptr<swapchain> m_swapchain;
 
     std::vector<VkFramebuffer> m_framebuffers;
-    VkRenderPass m_render_pass;
+    VkRenderPass m_render_pass = VK_NULL_HANDLE;
 };
 
 } // namespace quix

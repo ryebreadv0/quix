@@ -11,15 +11,11 @@
 namespace quix {
 
 swapchain::swapchain(std::shared_ptr<window> s_window, std::shared_ptr<device> s_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
-    : m_window(s_window)
-    , m_device(s_device)
+    : m_window(std::move(s_window))
+    , m_device(std::move(s_device))
     , m_frames_in_flight(frames_in_flight)
     , m_present_mode(present_mode)
-    , m_logger("swapchain")
 {
-    m_logger.set_level(spdlog::level::trace);
-    m_logger.add_sink(m_device->get_sink());
-    m_logger.trace("Created swapchain class");
 
     create_swapchain();
     create_image_views();
@@ -30,7 +26,6 @@ swapchain::~swapchain()
     destroy_image_views();
     destroy_swapchain();
 
-    m_logger.trace("Destroyed swapchain class");
 }
 
 void swapchain::recreate_swapchain()
@@ -97,13 +92,11 @@ void swapchain::create_swapchain(VkSwapchainKHR old_swapchain)
     m_swapchain_images.resize(imageCount);
     vkGetSwapchainImagesKHR(m_device->get_logical_device(), m_swapchain, &imageCount, m_swapchain_images.data());
 
-    m_logger.trace("Created swapchain");
 }
 
 void swapchain::destroy_swapchain()
 {
     vkDestroySwapchainKHR(m_device->get_logical_device(), m_swapchain, nullptr);
-    m_logger.trace("Destroyed swapchain");
 }
 
 void swapchain::create_image_views()
@@ -130,7 +123,6 @@ void swapchain::create_image_views()
         VK_CHECK(vkCreateImageView(m_device->get_logical_device(), &createInfo, nullptr, &m_swapchain_image_views[i]), "failed to create image views");
     }
 
-    m_logger.trace("created image views");
 }
 
 void swapchain::destroy_image_views()
@@ -138,7 +130,6 @@ void swapchain::destroy_image_views()
     for (auto& image_view : m_swapchain_image_views) {
         vkDestroyImageView(m_device->get_logical_device(), image_view, nullptr);
     }
-    m_logger.trace("destroyed image views");
 }
 
 NODISCARD VkSurfaceFormatKHR swapchain::choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& available_formats) const noexcept
@@ -149,7 +140,8 @@ NODISCARD VkSurfaceFormatKHR swapchain::choose_swap_surface_format(const std::ve
         }
     }
 
-    m_logger.warn("preferred surface format was not found, using first available");
+    spdlog::warn("preferred surface format was not found, using first available\n");
+    
     return available_formats[0];
 }
 
@@ -161,7 +153,7 @@ NODISCARD VkPresentModeKHR swapchain::choose_swap_present_mode(const std::vector
         }
     }
 
-    m_logger.warn("preferred present mode was not found, using FIFO");
+    spdlog::warn("preferred present mode was not found, using FIFO\n");
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 

@@ -3,6 +3,8 @@
 
 #include "quix_pipeline.hpp"
 
+#include <utility>
+
 #include "quix_device.hpp"
 #include "quix_instance.hpp"
 #include "quix_render_target.hpp"
@@ -29,8 +31,8 @@ namespace graphics {
     // pipeline_builder class
     
     pipeline_builder::pipeline_builder(std::shared_ptr<device> s_device, std::shared_ptr<render_target> s_render_target, pipeline_manager* pipeline_manager)
-        : m_device(s_device)
-        , m_render_target(s_render_target)
+        : m_device(std::move(s_device))
+        , m_render_target(std::move(s_render_target))
         , m_pipeline_manager(pipeline_manager)
     {
         pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -52,7 +54,7 @@ namespace graphics {
     VkPipelineShaderStageCreateInfo pipeline_builder::create_shader_stage(
         const char* file_path, const VkShaderStageFlagBits shader_stage)
     {
-        EShLanguage EShStage;
+        EShLanguage EShStage{};
         switch (shader_stage) {
         case VK_SHADER_STAGE_VERTEX_BIT:
             EShStage = EShLangVertex;
@@ -98,8 +100,8 @@ namespace graphics {
         std::shared_ptr<render_target> render_target,
         const VkPipelineLayoutCreateInfo* pipeline_layout_info,
         VkGraphicsPipelineCreateInfo* pipeline_create_info)
-        : m_device(device)
-        , m_render_target(render_target)
+        : m_device(std::move(device))
+        , m_render_target(std::move(render_target))
     {
         create_pipeline_layout(pipeline_layout_info);
         create_pipeline(pipeline_create_info);
@@ -136,13 +138,13 @@ namespace graphics {
     // pipeline_manager class
 
     pipeline_manager::pipeline_manager(std::shared_ptr<device> device)
-        : m_device(device)
+        : m_device(std::move(device))
     {
     }
 
     std::shared_ptr<pipeline_builder> pipeline_manager::create_pipeline_builder(std::shared_ptr<render_target> render_target)
     {
-        return allocate_shared<pipeline_builder>(m_device, render_target, this);
+        return allocate_shared<pipeline_builder>(m_device, std::move(render_target), this);
         // return pipeline_builder { m_device, render_target };
     }
 

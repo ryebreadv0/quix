@@ -3,9 +3,7 @@
 
 #include "quix_descriptor.hpp"
 
-namespace quix {
-
-namespace descriptor {
+namespace quix::descriptor {
 
     // allocator_pool struct start
 
@@ -125,7 +123,7 @@ namespace descriptor {
 
     VkDescriptorPool allocator::createDescriptorPool(int count, VkDescriptorPoolCreateFlags flags)
     {
-        VkDescriptorPoolSize* sizes = (VkDescriptorPoolSize*)alloca(s_PoolSizes.sizes.size() * sizeof(VkDescriptorPoolSize));
+        auto* sizes = (VkDescriptorPoolSize*)alloca(s_PoolSizes.sizes.size() * sizeof(VkDescriptorPoolSize));
 
         for (int i = 0; i < s_PoolSizes.sizes.size(); i++) {
             sizes[i] = { s_PoolSizes.sizes[i].first, static_cast<uint32_t>(s_PoolSizes.sizes[i].second * count) };
@@ -192,7 +190,7 @@ namespace descriptor {
     void layout_cache::cleanup()
     {
         // delete every descriptor layout held
-        for (auto pair : layoutCache) {
+        for (const auto& pair : layoutCache) {
             vkDestroyDescriptorSetLayout(device, pair.second, nullptr);
         }
     }
@@ -217,8 +215,8 @@ namespace descriptor {
         }
         // sort the bindings if they aren't in order
         if (!isSorted) {
-            std::sort(layoutinfo.bindings.begin(), layoutinfo.bindings.end(), [](VkDescriptorSetLayoutBinding& a, VkDescriptorSetLayoutBinding& b) {
-                return a.binding < b.binding;
+            std::sort(layoutinfo.bindings.begin(), layoutinfo.bindings.end(), [](VkDescriptorSetLayoutBinding& lhs, VkDescriptorSetLayoutBinding& rhs) {
+                return lhs.binding < rhs.binding;
             });
         }
 
@@ -230,7 +228,7 @@ namespace descriptor {
             return (*it).second;
         } else {
             // create a new one (not found)
-            VkDescriptorSetLayout layout;
+            VkDescriptorSetLayout layout = VK_NULL_HANDLE;
             vkCreateDescriptorSetLayout(device, info, nullptr, &layout);
 
             // add to cache
@@ -289,6 +287,7 @@ namespace descriptor {
     builder::builder(layout_cache* layoutCache, allocator_pool* pool)
         : cache(layoutCache)
         , alloc(pool)
+        , layout(VK_NULL_HANDLE)
     {
     }
 
@@ -393,8 +392,6 @@ namespace descriptor {
     }
 
     // builder class end
-
-} // namespace descriptor
 
 } // namespace quix
 

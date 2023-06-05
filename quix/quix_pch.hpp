@@ -27,12 +27,10 @@
 #include <utility>
 #include <vector>
 
-#include <assert.h>
+#include <cassert>
 #undef assert
 
 #include <cmath>
-
-#include "quix_logger.hpp"
 
 #define NODISCARD [[nodiscard]]
 #define MAYBEUNUSED [[maybe_unused]]
@@ -79,3 +77,4 @@ constexpr inline void quix_error(StrType error, const char* file, int line) noex
 
 #define quix_error(error) quix_error(error, __FILE__, __LINE__)
 
+#include "quix_logger.hpp"

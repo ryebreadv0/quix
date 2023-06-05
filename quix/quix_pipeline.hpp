@@ -12,7 +12,7 @@ namespace graphics {
     class pipeline_manager {
         friend class pipeline_builder;
     public:
-        pipeline_manager(std::shared_ptr<device> s_device);
+        explicit pipeline_manager(std::shared_ptr<device> s_device);
 
         ~pipeline_manager() = default;
 

@@ -1,6 +1,7 @@
 #ifndef _QUIX_COMMAND_LIST_HPP
 #define _QUIX_COMMAND_LIST_HPP
 
+#include <vulkan/vulkan_core.h>
 namespace quix {
 
 class instance;
@@ -30,11 +31,11 @@ private:
     std::shared_ptr<device> m_device;
     std::shared_ptr<swapchain> m_swapchain;
 
-    const int m_frames_in_flight;
-    void* m_sync_buffer;
-    VkFence* m_fences;
-    VkSemaphore* m_available_semaphores;
-    VkSemaphore* m_finished_semaphores;
+    int m_frames_in_flight;
+    void* m_sync_buffer = nullptr;
+    VkFence* m_fences = nullptr;
+    VkSemaphore* m_available_semaphores = nullptr;
+    VkSemaphore* m_finished_semaphores = nullptr;
 };
 
 class command_list {
@@ -53,8 +54,10 @@ public:
     void begin_record(VkCommandBufferUsageFlags flags = 0);
     void end_record();
 
-    void begin_render_pass(std::shared_ptr<render_target> target, std::shared_ptr<graphics::pipeline> pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count);
+    void begin_render_pass(const std::shared_ptr<render_target>& target, const std::shared_ptr<graphics::pipeline>& pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count);
     void end_render_pass();
+
+    void copy_buffer_to_buffer(VkBuffer src_buffer, VkDeviceSize src_offset, VkBuffer dst_buffer, VkDeviceSize dst_offset, VkDeviceSize size);
 
 private:
     VkCommandBuffer buffer;
@@ -75,7 +78,7 @@ public:
 
     NODISCARD inline VkCommandPool get_pool() const noexcept { return pool; }
 
-    NODISCARD std::shared_ptr<command_list> create_command_list() const; // TODO : allow the use of secondary command buffers
+    NODISCARD std::shared_ptr<command_list> create_command_list(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY) const;
 
 private:
     std::shared_ptr<device> m_device;
