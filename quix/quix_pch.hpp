@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <functional>
 #include <limits>
 #include <map>
 #include <memory>
@@ -35,6 +36,25 @@
 #define NODISCARD [[nodiscard]]
 #define MAYBEUNUSED [[maybe_unused]]
 #define UNLIKELY [[unlikely]]
+
+template <typename Type, typename Allocator, typename... Args>
+NODISCARD constexpr inline std::shared_ptr<Type> allocate_shared(Allocator* allocator, Args&&... args)
+{
+    return std::allocate_shared<Type, std::pmr::polymorphic_allocator<Type>>(allocator, std::forward<Args>(args)...);
+}
+
+template <typename Type>
+using allocated_unique_ptr = std::unique_ptr<Type, std::function<void(Type*)>>;
+
+template <typename Type, typename Allocator, typename... Args>
+NODISCARD constexpr inline allocated_unique_ptr<Type> allocate_unique(Allocator* allocator, Args&&... args)
+{
+    void* allocation = allocator->allocate(sizeof(Type), alignof(Type));
+    Type* object = new (allocation) Type { std::forward<Args>(args)... };
+    return allocated_unique_ptr<Type> { object, [](Type* ptr) {
+                                           ptr->~Type();
+                                       } };
+}
 
 template <typename StrType>
 constexpr inline void VK_CHECK(VkResult result, StrType error, const char* file, int line) noexcept(true)

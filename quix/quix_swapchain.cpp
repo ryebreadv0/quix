@@ -140,7 +140,7 @@ NODISCARD VkSurfaceFormatKHR swapchain::choose_swap_surface_format(const std::ve
         }
     }
 
-    spdlog::warn("preferred surface format was not found, using first available\n");
+    spdlog::warn("preferred surface format was not found, using first available");
     
     return available_formats[0];
 }
@@ -153,7 +153,7 @@ NODISCARD VkPresentModeKHR swapchain::choose_swap_present_mode(const std::vector
         }
     }
 
-    spdlog::warn("preferred present mode was not found, using FIFO\n");
+    spdlog::warn("preferred present mode was not found, using FIFO");
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 

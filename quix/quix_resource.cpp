@@ -58,7 +58,7 @@ void buffer_handle::create_staging_buffer(const VkDeviceSize size)
     create_buffer(&buffer_info, &alloc_info);
 }
 
-void buffer_handle::create_staged_buffer(const VkDeviceSize size, const void* data, const VkBufferUsageFlags usage_flags, instance* inst)
+void buffer_handle::create_staged_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const void* data, instance* inst)
 {
     buffer_handle staging_buffer(m_device);
     staging_buffer.create_staging_buffer(size);

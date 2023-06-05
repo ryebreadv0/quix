@@ -18,7 +18,7 @@ struct buffer_handle {
     void create_buffer(const VkBufferCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
     void create_uniform_buffer(const VkDeviceSize size);
     void create_staging_buffer(const VkDeviceSize size);
-    void create_staged_buffer(const VkDeviceSize size, const void* data, const VkBufferUsageFlags usage_flags, instance* inst);
+    void create_staged_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const void* data, instance* inst);
 
     NODISCARD inline VkBuffer get_buffer() const noexcept { return m_buffer; }
     NODISCARD inline VmaAllocationInfo get_alloc_info() const noexcept { return m_alloc_info; }

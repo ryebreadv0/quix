@@ -46,7 +46,9 @@ namespace graphics {
     {
         create_pipeline_layout_info();
 
-        return m_pipeline_manager->allocate_shared<pipeline>(m_device, m_render_target, &m_layout_info, &pipeline_create_info);
+        return allocate_shared<pipeline>(&m_pipeline_manager->m_allocator, m_device, m_render_target, &m_layout_info, &pipeline_create_info);
+
+        // return m_pipeline_manager->allocate_shared<pipeline>(m_device, m_render_target, &m_layout_info, &pipeline_create_info);
 
         // return pipeline { m_device, m_render_target, &m_layout_info, &pipeline_create_info };
     }
@@ -144,7 +146,7 @@ namespace graphics {
 
     std::shared_ptr<pipeline_builder> pipeline_manager::create_pipeline_builder(std::shared_ptr<render_target> render_target)
     {
-        return allocate_shared<pipeline_builder>(m_device, std::move(render_target), this);
+        return allocate_shared<pipeline_builder>(&m_allocator, m_device, std::move(render_target), this);
         // return pipeline_builder { m_device, render_target };
     }
 

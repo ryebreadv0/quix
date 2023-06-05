@@ -1,6 +1,7 @@
 #ifndef _QUIX_PIPELINE_BUILDER_HPP
 #define _QUIX_PIPELINE_BUILDER_HPP
 
+#include <vulkan/vulkan_core.h>
 namespace quix {
 
 class device;
@@ -31,8 +32,8 @@ namespace graphics {
         std::shared_ptr<device> m_device;
         std::shared_ptr<render_target> m_render_target;
 
-        VkPipelineLayout m_pipeline_layout;
-        VkPipeline m_pipeline;
+        VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
+        VkPipeline m_pipeline = VK_NULL_HANDLE;
 
         void create_pipeline_layout(const VkPipelineLayoutCreateInfo* pipeline_layout_info);
         void create_pipeline(VkGraphicsPipelineCreateInfo* pipeline_create_info);

@@ -4,7 +4,6 @@
 #include "quix_device.hpp"
 
 #include "quix_window.hpp"
-#include <spdlog/fmt/bundled/core.h>
 
 namespace quix {
 
@@ -30,7 +29,7 @@ device::~device()
 {
 #ifdef _DEBUG
     if (initialized != true) {
-        spdlog::error("error device not initialized\n");
+        spdlog::error("error device not initialized");
     }
 #endif
 
@@ -59,7 +58,7 @@ void device::init(std::vector<const char*>&& requested_extensions, VkPhysicalDev
     this->requested_extensions = std::move(requested_extensions);
     this->requested_features = requested_features;
 
-    spdlog::info("requested extensions: {}\n", requested_extensions.size());
+    spdlog::info("requested extensions: {}", requested_extensions.size());
 
     create_surface();
 
@@ -382,13 +381,13 @@ int device::rate_physical_device(VkPhysicalDevice physical_device)
         score += 1;
         break;
     default:
-        spdlog::warn("Unknown device type: {}\n", properties.deviceType);
+        spdlog::warn("Unknown device type: {}", properties.deviceType);
         score = 0;
         return score;
         break;
     }
 
-    spdlog::trace("Device: {} score: {}\n", properties.deviceName, score);
+    spdlog::trace("Device: {} score: {}", properties.deviceName, score);
     
     return score;
 }
@@ -407,7 +406,7 @@ void device::pick_physical_device()
 
     std::multimap<int, VkPhysicalDevice> deviceRatings;
 
-    spdlog::info("Found {} devices\n", deviceCount);
+    spdlog::info("Found {} devices", deviceCount);
 
     // rate physicalDevice
     for (int i = 0; i < deviceCount; i++) {
@@ -419,14 +418,14 @@ void device::pick_physical_device()
         auto& deviceRating = *it;
         if (is_physical_device_suitable(deviceRating.second)) {
             if (deviceRating.first <= 0) {
-                spdlog::warn("[WARNING] Device has a score of {} which means it does not support requested features\n", deviceRating.first);
+                spdlog::warn("[WARNING] Device has a score of {} which means it does not support requested features", deviceRating.first);
                 continue;
             }
 
             m_physical_device = deviceRating.second;
             m_queue_family_indices = find_queue_families(m_physical_device);
 
-            spdlog::info("Using device with score of {}\n", deviceRating.first);
+            spdlog::info("Using device with score of {}", deviceRating.first);
 
             // maxMsaa = getMaxUsableSampleCount();
             break;

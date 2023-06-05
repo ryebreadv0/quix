@@ -18,8 +18,8 @@ instance::instance(const char* app_name,
     uint32_t app_version,
     int width,
     int height)
-    : m_window(allocate_shared<window>(app_name, width, height))
-    , m_device(allocate_shared<device>(
+    : m_window(allocate_shared<window>(&m_allocator,app_name, width, height))
+    , m_device(allocate_shared<device>(&m_allocator,
           m_window,
           app_name,
           app_version,
@@ -38,33 +38,33 @@ void instance::create_device(std::vector<const char*>&& requested_extensions, Vk
 {
     m_device->init(std::move(requested_extensions), requested_features);
 
-    m_descriptor_allocator = allocate_unique<descriptor::allocator>(m_device->get_logical_device());
-    m_descriptor_layout_cache = allocate_unique<descriptor::layout_cache>(m_device->get_logical_device());
+    m_descriptor_allocator = allocate_unique<descriptor::allocator>(&m_allocator,m_device->get_logical_device());    
+    m_descriptor_layout_cache = allocate_unique<descriptor::layout_cache>(&m_allocator,m_device->get_logical_device());
 }
 
 void instance::create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
 {
-    m_swapchain = allocate_shared<swapchain>(m_window, m_device, frames_in_flight, present_mode);
+    m_swapchain = allocate_shared<swapchain>(&m_allocator, m_window, m_device, frames_in_flight, present_mode);
 }
 
 void instance::create_pipeline_manager()
 {
-    m_pipeline_manager = allocate_shared<graphics::pipeline_manager>(m_device);
+    m_pipeline_manager = allocate_shared<graphics::pipeline_manager>(&m_allocator, m_device);
 }
 
 NODISCARD std::shared_ptr<command_pool> instance::get_command_pool()
 {
-    return allocate_shared<command_pool>(m_device, m_device->get_command_pool());
+    return allocate_shared<command_pool>(&m_allocator, m_device, m_device->get_command_pool());
 }
 
 NODISCARD std::shared_ptr<render_target> instance::create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) noexcept
 {
-    return allocate_shared<render_target>(m_window, m_device, m_swapchain, &render_pass_create_info);
+    return allocate_shared<render_target>(&m_allocator, m_window, m_device, m_swapchain, &render_pass_create_info);
 }
 
 NODISCARD std::shared_ptr<sync> instance::create_sync_objects() noexcept
 {
-    return allocate_shared<sync>(m_device, m_swapchain);
+    return allocate_shared<sync>(&m_allocator, m_device, m_swapchain);
 }
 
 void instance::wait_idle()
