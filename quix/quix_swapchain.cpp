@@ -3,7 +3,6 @@
 
 #include "quix_swapchain.hpp"
 
-#include "quix_common.hpp"
 #include "quix_instance.hpp"
 #include "quix_window.hpp"
 #include "quix_device.hpp"

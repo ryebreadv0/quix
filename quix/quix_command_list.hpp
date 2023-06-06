@@ -1,7 +1,6 @@
 #ifndef _QUIX_COMMAND_LIST_HPP
 #define _QUIX_COMMAND_LIST_HPP
 
-#include <vulkan/vulkan_core.h>
 namespace quix {
 
 class instance;
@@ -18,10 +17,15 @@ public:
     sync(std::shared_ptr<device> s_device, std::shared_ptr<swapchain> s_swapchain);
     ~sync();
 
+    sync(const sync&) = delete;
+    const sync& operator=(const sync&) = delete;
+    sync(sync&&) = delete;
+    const sync& operator=(sync&&) = delete;
+
     void wait_for_fence(const int frame);
     void reset_fence(const int frame);
     VkResult acquire_next_image(const int frame, uint32_t* image_index);
-    VkResult submit_frame(const int frame, std::shared_ptr<command_list> command);
+    VkResult submit_frame(const int frame, command_list* command);
     VkResult present_frame(const int frame, const uint32_t image_index);
 
 private:
@@ -78,9 +82,10 @@ public:
 
     NODISCARD inline VkCommandPool get_pool() const noexcept { return pool; }
 
-    NODISCARD std::shared_ptr<command_list> create_command_list(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY) const;
+    NODISCARD allocated_unique_ptr<command_list> create_command_list(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
 private:
+    std::pmr::unsynchronized_pool_resource m_allocator;
     std::shared_ptr<device> m_device;
     VkCommandPool pool;
 };

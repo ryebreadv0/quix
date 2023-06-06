@@ -1,12 +1,26 @@
 #ifndef _QUIX_DEVICE_HPP
 #define _QUIX_DEVICE_HPP
 
-#include "quix_common.hpp"
-
 namespace quix {
 
 class window;
 class swapchain;
+
+struct queue_family_indices {
+    std::optional<uint32_t> graphics_family;
+    std::optional<uint32_t> present_family;
+
+    NODISCARD bool is_complete() const
+    {
+        return graphics_family.has_value() && present_family.has_value();
+    }
+};
+
+struct swapchain_support_details {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> present_modes;
+};
 
 class device {
     friend class swapchain;

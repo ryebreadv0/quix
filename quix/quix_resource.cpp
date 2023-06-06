@@ -41,6 +41,23 @@ void buffer_handle::create_uniform_buffer(const VkDeviceSize size)
     create_buffer(&buffer_info, &alloc_info);
 }
 
+void buffer_handle::create_gpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags)
+{
+    VkBufferCreateInfo buffer_info {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = size,
+        .usage = usage_flags,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    };
+
+    VmaAllocationCreateInfo alloc_info {
+        .flags = 0,
+        .usage = VMA_MEMORY_USAGE_GPU_ONLY,
+    };
+
+    create_buffer(&buffer_info, &alloc_info);
+}
+
 void buffer_handle::create_staging_buffer(const VkDeviceSize size)
 {
     VkBufferCreateInfo buffer_info {

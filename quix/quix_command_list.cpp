@@ -42,7 +42,7 @@ VkResult sync::acquire_next_image(const int frame, uint32_t* image_index)
     return vkAcquireNextImageKHR(m_device->get_logical_device(), m_swapchain->get_swapchain(), UINT64_MAX, m_available_semaphores[frame], VK_NULL_HANDLE, image_index);
 }
 
-VkResult sync::submit_frame(const int frame, std::shared_ptr<command_list> command)
+VkResult sync::submit_frame(const int frame, command_list* command)
 {
     VkSubmitInfo submitInfo {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -202,7 +202,7 @@ command_pool::~command_pool()
     m_device->return_command_pool(pool);
 }
 
-NODISCARD std::shared_ptr<command_list> command_pool::create_command_list(VkCommandBufferLevel level) const
+NODISCARD allocated_unique_ptr<command_list> command_pool::create_command_list(VkCommandBufferLevel level)
 {
     VkCommandBufferAllocateInfo alloc_info {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -214,7 +214,7 @@ NODISCARD std::shared_ptr<command_list> command_pool::create_command_list(VkComm
     VkCommandBuffer buffer = VK_NULL_HANDLE;
     vkAllocateCommandBuffers(m_device->get_logical_device(), &alloc_info, &buffer);
 
-    return std::make_shared<command_list>(m_device, buffer);
+    return allocate_unique<command_list>(&m_allocator, m_device, buffer);
 }
 
 } // namespace quix

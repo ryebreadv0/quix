@@ -6,7 +6,8 @@ namespace quix {
 class device;
 class instance;
 
-struct buffer_handle {
+class buffer_handle {
+public:
     explicit buffer_handle(std::shared_ptr<device> s_device);
 
     ~buffer_handle();
@@ -17,6 +18,7 @@ struct buffer_handle {
 
     void create_buffer(const VkBufferCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
     void create_uniform_buffer(const VkDeviceSize size);
+    void create_gpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags);
     void create_staging_buffer(const VkDeviceSize size);
     void create_staged_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const void* data, instance* inst);
 

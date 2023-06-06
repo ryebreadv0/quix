@@ -1,10 +1,10 @@
 #include "quix_command_list.hpp"
+#include "quix_common.hpp"
 #include "quix_descriptor.hpp"
 #include "quix_instance.hpp"
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"
 #include "quix_window.hpp"
-#include <vulkan/vulkan_core.h>
 
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
@@ -41,14 +41,12 @@ struct Vertex {
                 .location = 0,
                 .binding = 0,
                 .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = offsetof(Vertex, pos) 
-            },
+                .offset = offsetof(Vertex, pos) },
             VkVertexInputAttributeDescription {
                 .location = 1,
                 .binding = 0,
                 .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = offsetof(Vertex, color) 
-            }
+                .offset = offsetof(Vertex, color) }
         };
     }
 };
@@ -63,6 +61,11 @@ int main()
         {});
 
     instance.create_swapchain(FRAMES_IN_FLIGHT, VK_PRESENT_MODE_FIFO_KHR);
+
+    auto vertices = quix::create_auto_array<Vertex>(
+        Vertex { vec3 { 0.0f, -0.5f, 0.0f }, vec3 { 1.0f, 1.0f, 1.0f } },
+        Vertex { vec3 { 0.5f, 0.5f, 0.0f }, vec3 { 0.0f, 1.0f, 0.0f } },
+        Vertex { vec3 { -0.5f, 0.5f, 0.0f }, vec3 { 0.0f, 0.0f, 1.0f } });
 
     quix::renderpass_info<1, 1, 1> renderpass_info = {
         { VkAttachmentDescription {
@@ -111,7 +114,7 @@ int main()
                                      .buildLayout();
 
     auto pipeline = pipeline_builder->add_shader_stages(shader_stages)
-                        .create_vertex_state(vertex_binding_description.data(),vertex_binding_description.size(), vertex_attribute_description.data(), vertex_attribute_description.size())
+                        .create_vertex_state(vertex_binding_description.data(), vertex_binding_description.size(), vertex_attribute_description.data(), vertex_attribute_description.size())
                         .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
                         .add_descriptor_set_layout(descriptor_set_layout)
                         .create_graphics_pipeline();
@@ -125,7 +128,7 @@ int main()
 
     auto sync_objects = instance.create_sync_objects();
 
-    std::array<std::shared_ptr<quix::command_list>, FRAMES_IN_FLIGHT> command_lists {
+    std::array<quix::allocated_unique_ptr<quix::command_list>, FRAMES_IN_FLIGHT> command_lists {
         command_pool->create_command_list(), command_pool->create_command_list()
     };
 
@@ -155,7 +158,7 @@ int main()
 
         command_lists[current_frame]->end_record();
 
-        VK_CHECK(sync_objects->submit_frame(current_frame, command_lists[current_frame]), "failed to submit frame");
+        VK_CHECK(sync_objects->submit_frame(current_frame, command_lists[current_frame].get()), "failed to submit frame");
 
         result = sync_objects->present_frame(current_frame, current_image_index);
 

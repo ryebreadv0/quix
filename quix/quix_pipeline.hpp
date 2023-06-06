@@ -24,8 +24,7 @@ namespace graphics {
         std::shared_ptr<pipeline_builder> create_pipeline_builder(std::shared_ptr<render_target> render_target);
 
     private:
-        
-        std::pmr::unsynchronized_pool_resource m_allocator;
+        std::pmr::monotonic_buffer_resource m_allocator;
         std::shared_ptr<device> m_device;
     };
 

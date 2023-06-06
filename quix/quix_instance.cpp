@@ -52,9 +52,10 @@ void instance::create_pipeline_manager()
     m_pipeline_manager = allocate_shared<graphics::pipeline_manager>(&m_allocator, m_device);
 }
 
-NODISCARD std::shared_ptr<command_pool> instance::get_command_pool()
+NODISCARD std::unique_ptr<command_pool> instance::get_command_pool()
 {
-    return allocate_shared<command_pool>(&m_allocator, m_device, m_device->get_command_pool());
+    // Yes I have a reason to not allocate this from the monotonic buffer
+    return std::make_unique<command_pool>(m_device, m_device->get_command_pool());
 }
 
 NODISCARD std::shared_ptr<render_target> instance::create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) noexcept
