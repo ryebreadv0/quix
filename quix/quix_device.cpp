@@ -7,12 +7,12 @@
 
 namespace quix {
 
-device::device(std::shared_ptr<window> s_window,
+device::device(weakref<window> p_window,
     const char* app_name,
     uint32_t app_version,
     const char* engine_name,
     uint32_t engine_version)
-    : m_window(s_window)
+    : m_window(p_window)
 {
 
     glslang::InitializeProcess();

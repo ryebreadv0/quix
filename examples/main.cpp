@@ -98,14 +98,14 @@ int main()
 
     instance.create_pipeline_manager();
     auto pipeline_manager = instance.get_pipeline_manager();
-    auto pipeline_builder = pipeline_manager->create_pipeline_builder(render_target);
+    auto pipeline_builder = pipeline_manager->create_pipeline_builder(&render_target);
 
     auto vertex_binding_description = Vertex::get_binding_description();
     auto vertex_attribute_description = Vertex::get_attribute_description();
 
-    auto shader_stages = pipeline_builder->create_shader_array(
-        pipeline_builder->create_shader_stage("examples/simpleshader.vert", VK_SHADER_STAGE_VERTEX_BIT),
-        pipeline_builder->create_shader_stage("examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+    auto shader_stages = pipeline_builder.create_shader_array(
+        pipeline_builder.create_shader_stage("examples/simpleshader.vert", VK_SHADER_STAGE_VERTEX_BIT),
+        pipeline_builder.create_shader_stage("examples/simpleshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
 
     auto allocator_pool = instance.get_descriptor_allocator_pool();
     auto descriptor_set_builder = instance.get_descriptor_builder(&allocator_pool);
@@ -113,7 +113,7 @@ int main()
                                      .bind_buffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
                                      .buildLayout();
 
-    auto pipeline = pipeline_builder->add_shader_stages(shader_stages)
+    auto pipeline = pipeline_builder.add_shader_stages(shader_stages)
                         .create_vertex_state(vertex_binding_description.data(), vertex_binding_description.size(), vertex_attribute_description.data(), vertex_attribute_description.size())
                         .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
                         .add_descriptor_set_layout(descriptor_set_layout)
@@ -129,7 +129,7 @@ int main()
     auto sync_objects = instance.create_sync_objects();
 
     std::array<quix::allocated_unique_ptr<quix::command_list>, FRAMES_IN_FLIGHT> command_lists {
-        command_pool->create_command_list(), command_pool->create_command_list()
+        command_pool.create_command_list(), command_pool.create_command_list()
     };
 
     std::array<VkClearValue, 1> clear_values = {
@@ -139,14 +139,14 @@ int main()
     while (window->should_close() == false) {
         window->poll_events();
 
-        VkResult result = sync_objects->acquire_next_image(current_frame, &current_image_index);
+        VkResult result = sync_objects.acquire_next_image(current_frame, &current_image_index);
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-            render_target->recreate_swapchain();
+            render_target.recreate_swapchain();
             continue;
         } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
             quix_error("failed to acquire swapchain image");
         }
-        sync_objects->reset_fence(current_frame);
+        sync_objects.reset_fence(current_frame);
 
         command_lists[current_frame]->begin_record();
 
@@ -158,15 +158,16 @@ int main()
 
         command_lists[current_frame]->end_record();
 
-        VK_CHECK(sync_objects->submit_frame(current_frame, command_lists[current_frame].get()), "failed to submit frame");
+        VK_CHECK(sync_objects.submit_frame(current_frame, command_lists[current_frame].get()), "failed to submit frame");
 
-        result = sync_objects->present_frame(current_frame, current_image_index);
+        result = sync_objects.present_frame(current_frame, current_image_index);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->get_framebuffer_resized())
-            render_target->recreate_swapchain();
-        else if (result != VK_SUCCESS)
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->get_framebuffer_resized()) {
+            render_target.recreate_swapchain();
+        }
+        else if (result != VK_SUCCESS) {
             quix_error("failed to present swapchain image");
-
+        }
         current_frame = (current_frame + 1) % FRAMES_IN_FLIGHT;
     }
 

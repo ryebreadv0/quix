@@ -96,6 +96,49 @@ constexpr inline void quix_error(StrType error, const char* file, int line) noex
 
 #define quix_error(error) quix::quix_error(error, __FILE__, __LINE__)
 
+template <typename Type>
+struct weakref {
+    // a weak reference that does not own the pointer
+    constexpr explicit weakref<Type>(Type* ptr)
+        : ptr(ptr)
+    {
+    }
+    constexpr explicit weakref<Type>(const std::shared_ptr<Type>& ptr)
+        : ptr(ptr.get())
+    {
+    }
+    constexpr explicit weakref<Type>(const std::unique_ptr<Type>& ptr)
+        : ptr(ptr.get())
+    {
+    }
+    constexpr explicit weakref<Type>(const allocated_unique_ptr<Type>& ptr)
+        : ptr(ptr.get())
+    {
+    }
+
+    ~weakref<Type>() = default;
+    weakref<Type>(const weakref<Type>& other)
+        : ptr(other.ptr)
+    {
+    }
+    weakref<Type>& operator=(const weakref<Type>& other) = default;
+    weakref<Type>(weakref<Type>&& other) noexcept = default;
+    weakref<Type>& operator=(weakref<Type>&& other) noexcept = default;
+
+    NODISCARD constexpr inline Type* get() const noexcept { return ptr; }
+    NODISCARD constexpr inline Type* operator->() const noexcept { return ptr; }
+
+private:
+    Type* ptr;
+};
+
+template <typename Type, typename PtrType>
+constexpr inline auto make_weakref(const PtrType& ptr) -> weakref<Type>
+{
+    static_assert(std::is_constructible<weakref<Type>, PtrType>(), "Cannot make weakref from this pointer type");
+    return weakref<Type>(ptr);
+}
+
 } // namespace quix
 
 #endif // _QUIX_COMMON_HPP

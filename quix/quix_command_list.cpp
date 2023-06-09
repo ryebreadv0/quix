@@ -13,9 +13,9 @@
 
 namespace quix {
 
-sync::sync(std::shared_ptr<device> s_device, std::shared_ptr<swapchain> s_swapchain)
-    : m_device(std::move(s_device))
-    , m_swapchain(std::move(s_swapchain))
+sync::sync(weakref<device> p_device, weakref<swapchain> p_swapchain)
+    : m_device(std::move(p_device))
+    , m_swapchain(std::move(p_swapchain))
     , m_frames_in_flight(m_swapchain->get_frames_in_flight())
 {
     create_sync_objects();
@@ -114,8 +114,8 @@ void sync::destroy_sync_objects()
     free(m_sync_buffer);
 }
 
-command_list::command_list(std::shared_ptr<device> s_device, VkCommandBuffer buffer)
-    : m_device(std::move(s_device))
+command_list::command_list(weakref<device> p_device, VkCommandBuffer buffer)
+    : m_device(std::move(p_device))
     , buffer(buffer)
 {
 }
@@ -139,28 +139,28 @@ void command_list::end_record()
     VK_CHECK(vkEndCommandBuffer(buffer), "failed to record command buffer!");
 }
 
-void command_list::begin_render_pass(const std::shared_ptr<render_target>& target, const std::shared_ptr<graphics::pipeline>& pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count)
+void command_list::begin_render_pass(const render_target& r_target, const std::shared_ptr<graphics::pipeline>& p_pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count)
 {
     VkRenderPassBeginInfo render_pass_begin_info {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = target->get_render_pass(),
-        .framebuffer = target->get_framebuffer(image_index),
+        .renderPass = r_target.get_render_pass(),
+        .framebuffer = r_target.get_framebuffer(image_index),
         .renderArea = {
             .offset = { 0, 0 },
-            .extent = target->get_extent() },
+            .extent = r_target.get_extent() },
         .clearValueCount = clear_value_count,
         .pClearValues = clear_value
     };
 
     vkCmdBeginRenderPass(buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->get_pipeline());
+    vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, p_pipeline->get_pipeline());
 
     VkViewport viewport {
         .x = 0.0f,
         .y = 0.0f,
-        .width = static_cast<float>(target->get_extent().width),
-        .height = static_cast<float>(target->get_extent().height),
+        .width = static_cast<float>(r_target.get_extent().width),
+        .height = static_cast<float>(r_target.get_extent().height),
         .minDepth = 0.0f,
         .maxDepth = 1.0f
     };
@@ -169,7 +169,7 @@ void command_list::begin_render_pass(const std::shared_ptr<render_target>& targe
 
     VkRect2D scissor {
         .offset = { 0, 0 },
-        .extent = target->get_extent()
+        .extent = r_target.get_extent()
     };
 
     vkCmdSetScissor(buffer, 0, 1, &scissor);
@@ -191,8 +191,8 @@ void command_list::copy_buffer_to_buffer(VkBuffer src_buffer, VkDeviceSize src_o
     vkCmdCopyBuffer(buffer, src_buffer, dst_buffer, 1, &copyRegion);
 }
 
-command_pool::command_pool(std::shared_ptr<device> s_device, VkCommandPool pool)
-    : m_device(std::move(s_device))
+command_pool::command_pool(weakref<device> p_device, VkCommandPool pool)
+    : m_device(std::move(p_device))
     , pool(pool)
 {
 }

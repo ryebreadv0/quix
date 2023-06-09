@@ -18,9 +18,9 @@ instance::instance(const char* app_name,
     uint32_t app_version,
     int width,
     int height)
-    : m_window(allocate_shared<window>(&m_allocator,app_name, width, height))
-    , m_device(allocate_shared<device>(&m_allocator,
-          m_window,
+    : m_window(allocate_unique<window>(&m_allocator, app_name, width, height))
+    , m_device(allocate_unique<device>(&m_allocator,
+          make_weakref<window>(m_window),
           app_name,
           app_version,
           "quix",
@@ -38,34 +38,42 @@ void instance::create_device(std::vector<const char*>&& requested_extensions, Vk
 {
     m_device->init(std::move(requested_extensions), requested_features);
 
-    m_descriptor_allocator = allocate_unique<descriptor::allocator>(&m_allocator,m_device->get_logical_device());    
-    m_descriptor_layout_cache = allocate_unique<descriptor::layout_cache>(&m_allocator,m_device->get_logical_device());
+    m_descriptor_allocator = allocate_unique<descriptor::allocator>(&m_allocator, m_device->get_logical_device());
+    m_descriptor_layout_cache = allocate_unique<descriptor::layout_cache>(&m_allocator, m_device->get_logical_device());
 }
 
 void instance::create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
 {
-    m_swapchain = allocate_shared<swapchain>(&m_allocator, m_window, m_device, frames_in_flight, present_mode);
+    m_swapchain = allocate_unique<swapchain>(&m_allocator, make_weakref<window>(m_window), make_weakref<device>(m_device), frames_in_flight, present_mode);
 }
 
 void instance::create_pipeline_manager()
 {
-    m_pipeline_manager = allocate_shared<graphics::pipeline_manager>(&m_allocator, m_device);
+    // TODO : make pipeline manager threadsafe (probably)
+    m_pipeline_manager = allocate_unique<graphics::pipeline_manager>(&m_allocator, make_weakref<device>(m_device));
 }
 
-NODISCARD std::unique_ptr<command_pool> instance::get_command_pool()
+NODISCARD command_pool instance::get_command_pool()
 {
-    // Yes I have a reason to not allocate this from the monotonic buffer
-    return std::make_unique<command_pool>(m_device, m_device->get_command_pool());
+    return command_pool{
+        make_weakref<device>(m_device), 
+        m_device->get_command_pool()};
 }
 
-NODISCARD std::shared_ptr<render_target> instance::create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) noexcept
+NODISCARD render_target instance::create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) noexcept
 {
-    return allocate_shared<render_target>(&m_allocator, m_window, m_device, m_swapchain, &render_pass_create_info);
+    return render_target{
+        make_weakref<window>(m_window),
+        make_weakref<device>(m_device),
+        make_weakref<swapchain>(m_swapchain),
+        &render_pass_create_info};
 }
 
-NODISCARD std::shared_ptr<sync> instance::create_sync_objects() noexcept
+NODISCARD sync instance::create_sync_objects() noexcept
 {
-    return allocate_shared<sync>(&m_allocator, m_device, m_swapchain);
+    return sync {
+        make_weakref<device>(m_device),
+        make_weakref<swapchain>(m_swapchain)};
 }
 
 void instance::wait_idle()
@@ -73,10 +81,10 @@ void instance::wait_idle()
     m_device->wait_idle();
 }
 
-NODISCARD std::shared_ptr<window>
+NODISCARD weakref<window>
 instance::get_window() const noexcept
 {
-    return m_window;
+    return make_weakref<window>(m_window);
 }
 
 NODISCARD VkDevice
@@ -90,9 +98,9 @@ NODISCARD VkSurfaceFormatKHR instance::get_surface_format() const noexcept
     return m_swapchain->get_surface_format();
 }
 
-NODISCARD std::shared_ptr<graphics::pipeline_manager> instance::get_pipeline_manager() const noexcept
+NODISCARD weakref<graphics::pipeline_manager> instance::get_pipeline_manager() const noexcept
 {
-    return m_pipeline_manager;
+    return make_weakref<graphics::pipeline_manager>(m_pipeline_manager);
 }
 
 NODISCARD descriptor::allocator_pool instance::get_descriptor_allocator_pool() const noexcept
@@ -105,9 +113,9 @@ NODISCARD descriptor::builder instance::get_descriptor_builder(descriptor::alloc
     return descriptor::builder { m_descriptor_layout_cache.get(), allocator_pool };
 }
 
-NODISCARD std::shared_ptr<device> instance::get_device() const noexcept
+NODISCARD weakref<device> instance::get_device() const noexcept
 {
-    return m_device;
+    return weakref<device> { m_device };
 }
 
 } // namespace quix

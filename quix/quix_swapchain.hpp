@@ -13,7 +13,7 @@ class swapchain {
     friend class render_target;
 
 public:
-    swapchain(std::shared_ptr<window> s_window, std::shared_ptr<device> s_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
+    swapchain(weakref<window> p_window, weakref<device> p_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
 
     ~swapchain();
     swapchain(const swapchain&) = delete;
@@ -21,11 +21,11 @@ public:
     swapchain(swapchain&&) = delete;
     swapchain& operator=(swapchain&&) = delete;
 
-    NODISCARD inline const VkSwapchainKHR get_swapchain() const noexcept { return m_swapchain; }
-    NODISCARD inline const int32_t get_frames_in_flight() const noexcept { return m_frames_in_flight; }
-    NODISCARD inline const VkSurfaceFormatKHR get_surface_format() const noexcept { return m_swapchain_surface_format; }
-    NODISCARD inline const VkExtent2D get_extent() const noexcept { return m_swapchain_extent; }
-    NODISCARD inline const std::vector<VkImageView>& get_image_views() const noexcept { return m_swapchain_image_views; }
+    NODISCARD inline VkSwapchainKHR get_swapchain() const noexcept { return m_swapchain; }
+    NODISCARD inline int32_t get_frames_in_flight() const noexcept { return m_frames_in_flight; }
+    NODISCARD inline VkSurfaceFormatKHR get_surface_format() const noexcept { return m_swapchain_surface_format; }
+    NODISCARD inline VkExtent2D get_extent() const noexcept { return m_swapchain_extent; }
+    NODISCARD const inline std::vector<VkImageView>& get_image_views() const noexcept { return m_swapchain_image_views; }
 
 private:
     void recreate_swapchain();
@@ -39,8 +39,8 @@ private:
     NODISCARD VkPresentModeKHR choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes) const noexcept;
     NODISCARD VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR& capabilities) const noexcept;
 
-    std::shared_ptr<window> m_window;
-    std::shared_ptr<device> m_device;
+    weakref<window> m_window;
+    weakref<device> m_device;
 
     int32_t m_frames_in_flight;
     VkPresentModeKHR m_present_mode;

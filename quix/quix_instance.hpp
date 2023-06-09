@@ -35,17 +35,17 @@ public:
     void create_device(std::vector<const char*>&& requested_extensions, VkPhysicalDeviceFeatures requested_features);
     void create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
     void create_pipeline_manager();
-    NODISCARD std::shared_ptr<render_target> create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) noexcept;
-    NODISCARD std::shared_ptr<sync> create_sync_objects() noexcept;
+    NODISCARD render_target create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) noexcept;
+    NODISCARD sync create_sync_objects() noexcept;
 
     void wait_idle();
 
-    NODISCARD std::shared_ptr<window> get_window() const noexcept;
+    NODISCARD weakref<window> get_window() const noexcept;
     NODISCARD VkDevice get_logical_device() const noexcept;
     NODISCARD VkSurfaceFormatKHR get_surface_format() const noexcept;
 
-    NODISCARD std::shared_ptr<graphics::pipeline_manager> get_pipeline_manager() const noexcept;
-    NODISCARD std::unique_ptr<command_pool> get_command_pool();
+    NODISCARD weakref<graphics::pipeline_manager> get_pipeline_manager() const noexcept;
+    NODISCARD command_pool get_command_pool();
 
     NODISCARD descriptor::allocator_pool get_descriptor_allocator_pool() const noexcept;
     NODISCARD descriptor::builder get_descriptor_builder(descriptor::allocator_pool* allocator_pool) const noexcept;
@@ -53,14 +53,14 @@ public:
 private:
     friend class swapchain;
 
-    NODISCARD std::shared_ptr<device> get_device() const noexcept;
+    NODISCARD weakref<device> get_device() const noexcept;
 
     std::pmr::monotonic_buffer_resource m_allocator;
 
-    std::shared_ptr<window> m_window;
-    std::shared_ptr<device> m_device;
-    std::shared_ptr<swapchain> m_swapchain;
-    std::shared_ptr<graphics::pipeline_manager> m_pipeline_manager;
+    allocated_unique_ptr<window> m_window;
+    allocated_unique_ptr<device> m_device;
+    allocated_unique_ptr<swapchain> m_swapchain;
+    allocated_unique_ptr<graphics::pipeline_manager> m_pipeline_manager;
 
     
     allocated_unique_ptr<descriptor::allocator> m_descriptor_allocator;

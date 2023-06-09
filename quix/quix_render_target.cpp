@@ -29,8 +29,8 @@ static constexpr renderpass_info<1, 1, 0> renderpass_info_default = {
     {}
 };
 
-render_target::render_target(std::shared_ptr<window> s_window,std::shared_ptr<device> s_device, std::shared_ptr<swapchain> s_swapchain, const VkRenderPassCreateInfo* render_pass_create_info)
-    : m_window(std::move(s_window)), m_device(std::move(s_device)), m_swapchain(std::move(s_swapchain))
+render_target::render_target(weakref<window> p_window, weakref<device> p_device, weakref<swapchain> p_swapchain, const VkRenderPassCreateInfo* render_pass_create_info)
+    : m_window(std::move(p_window)), m_device(std::move(p_device)), m_swapchain(std::move(p_swapchain))
 {
     create_renderpass(render_pass_create_info);
     create_framebuffers();
@@ -73,7 +73,7 @@ void render_target::create_renderpass(const VkRenderPassCreateInfo* renderpass_i
 
 void render_target::create_framebuffers()
 {
-    auto& swapchain_image_views = m_swapchain->get_image_views();
+    const auto& swapchain_image_views = m_swapchain->get_image_views();
 
     m_framebuffers.resize(swapchain_image_views.size());
     for (size_t i = 0; i < swapchain_image_views.size(); i++) {
@@ -97,7 +97,7 @@ void render_target::create_framebuffers()
 
 void render_target::destroy_framebuffers()
 {
-    for (auto framebuffer : m_framebuffers) {
+    for (auto* framebuffer : m_framebuffers) {
         vkDestroyFramebuffer(m_device->get_logical_device(), framebuffer, nullptr);
     }
 }

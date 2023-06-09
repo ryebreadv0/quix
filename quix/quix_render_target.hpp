@@ -31,7 +31,7 @@ struct renderpass_info {
 // TODO : check and see if I need to do anything about frames in flight
 class render_target {
 public:
-    render_target(std::shared_ptr<window> s_window, std::shared_ptr<device> s_device, std::shared_ptr<swapchain> s_swapchain, const VkRenderPassCreateInfo* render_pass_create_info);
+    render_target(weakref<window> p_window, weakref<device> p_device, weakref<swapchain> p_swapchain, const VkRenderPassCreateInfo* render_pass_create_info);
 
     ~render_target();
 
@@ -51,9 +51,9 @@ private:
     void create_framebuffers();
     void destroy_framebuffers();
 
-    std::shared_ptr<window> m_window;
-    std::shared_ptr<device> m_device;
-    std::shared_ptr<swapchain> m_swapchain;
+    weakref<window> m_window;
+    weakref<device> m_device;
+    weakref<swapchain> m_swapchain;
 
     std::vector<VkFramebuffer> m_framebuffers;
     VkRenderPass m_render_pass = VK_NULL_HANDLE;

@@ -14,8 +14,8 @@ namespace graphics {
         friend class pipeline_builder;
 
     public:
-        pipeline(std::shared_ptr<device> device,
-            std::shared_ptr<render_target> render_target,
+        pipeline(weakref<device> p_device,
+            weakref<render_target> p_render_target,
             const VkPipelineLayoutCreateInfo* pipeline_layout_info,
             VkGraphicsPipelineCreateInfo* pipeline_create_info);
         ~pipeline();
@@ -29,8 +29,8 @@ namespace graphics {
         NODISCARD inline VkPipeline get_pipeline() const noexcept { return m_pipeline; }
 
     private:
-        std::shared_ptr<device> m_device;
-        std::shared_ptr<render_target> m_render_target;
+        weakref<device> m_device;
+        weakref<render_target> m_render_target;
 
         VkPipelineLayout m_pipeline_layout = VK_NULL_HANDLE;
         VkPipeline m_pipeline = VK_NULL_HANDLE;
@@ -43,7 +43,7 @@ namespace graphics {
         friend class pipeline_manager;
 
     public:
-        pipeline_builder(std::shared_ptr<device> s_device, std::shared_ptr<render_target> s_render_target, pipeline_manager* pipeline_manager);
+        pipeline_builder(weakref<device> p_device, weakref<render_target> p_render_target, weakref<pipeline_manager> p_pipeline_manager);
 
         NODISCARD VkPipelineShaderStageCreateInfo create_shader_stage(
             const char* file_path, const VkShaderStageFlagBits shader_stage);
@@ -68,9 +68,9 @@ namespace graphics {
             uint32_t descriptor_set_layout_count {};
         };
 
-        std::shared_ptr<device> m_device;
-        std::shared_ptr<render_target> m_render_target;
-        pipeline_manager* m_pipeline_manager;
+        weakref<device> m_device;
+        weakref<render_target> m_render_target;
+        weakref<pipeline_manager> m_pipeline_manager;
 
         pipeline_info info;
         VkPipelineLayoutCreateInfo m_layout_info {};

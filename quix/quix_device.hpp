@@ -26,7 +26,7 @@ class device {
     friend class swapchain;
 
 public:
-    device(std::shared_ptr<window> s_window,
+    device(weakref<window> p_window,
         const char* app_name,
         uint32_t app_version,
         const char* engine_name,
@@ -76,7 +76,7 @@ private:
 
     // instance variables
 
-    std::shared_ptr<window> m_window;
+    weakref<window> m_window;
 
 #ifdef _DEBUG
     bool initialized = false;

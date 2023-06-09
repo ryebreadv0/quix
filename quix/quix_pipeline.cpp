@@ -29,11 +29,11 @@ namespace graphics {
     } // namespace defaults
 
     // pipeline_builder class
-    
-    pipeline_builder::pipeline_builder(std::shared_ptr<device> s_device, std::shared_ptr<render_target> s_render_target, pipeline_manager* pipeline_manager)
-        : m_device(std::move(s_device))
-        , m_render_target(std::move(s_render_target))
-        , m_pipeline_manager(pipeline_manager)
+
+    pipeline_builder::pipeline_builder(weakref<device> p_device, weakref<render_target> p_render_target, weakref<pipeline_manager> p_pipeline_manager)
+        : m_device(std::move(p_device))
+        , m_render_target(std::move(p_render_target))
+        , m_pipeline_manager(std::move(p_pipeline_manager))
     {
         pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
         pipeline_create_info.basePipelineHandle = nullptr;
@@ -56,7 +56,7 @@ namespace graphics {
     VkPipelineShaderStageCreateInfo pipeline_builder::create_shader_stage(
         const char* file_path, const VkShaderStageFlagBits shader_stage)
     {
-        EShLanguage EShStage{};
+        EShLanguage EShStage {};
         switch (shader_stage) {
         case VK_SHADER_STAGE_VERTEX_BIT:
             EShStage = EShLangVertex;
@@ -98,12 +98,12 @@ namespace graphics {
 
     // pipeline class
 
-    pipeline::pipeline(std::shared_ptr<device> device,
-        std::shared_ptr<render_target> render_target,
+    pipeline::pipeline(weakref<device> p_device,
+        weakref<render_target> p_render_target,
         const VkPipelineLayoutCreateInfo* pipeline_layout_info,
         VkGraphicsPipelineCreateInfo* pipeline_create_info)
-        : m_device(std::move(device))
-        , m_render_target(std::move(render_target))
+        : m_device(std::move(p_device))
+        , m_render_target(std::move(p_render_target))
     {
         create_pipeline_layout(pipeline_layout_info);
         create_pipeline(pipeline_create_info);
@@ -139,15 +139,17 @@ namespace graphics {
 
     // pipeline_manager class
 
-    pipeline_manager::pipeline_manager(std::shared_ptr<device> device)
+    pipeline_manager::pipeline_manager(weakref<device> device)
         : m_device(std::move(device))
     {
     }
 
-    std::shared_ptr<pipeline_builder> pipeline_manager::create_pipeline_builder(std::shared_ptr<render_target> render_target)
+    pipeline_builder pipeline_manager::create_pipeline_builder(render_target* p_render_target)
     {
-        return allocate_shared<pipeline_builder>(&m_allocator, m_device, std::move(render_target), this);
-        // return pipeline_builder { m_device, render_target };
+        return pipeline_builder{
+            m_device,
+            make_weakref<render_target>(p_render_target),
+            make_weakref<pipeline_manager>(this)};
     }
 
     // pipeline_manager class end

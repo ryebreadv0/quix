@@ -9,9 +9,9 @@
 
 namespace quix {
 
-swapchain::swapchain(std::shared_ptr<window> s_window, std::shared_ptr<device> s_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
-    : m_window(std::move(s_window))
-    , m_device(std::move(s_device))
+swapchain::swapchain(weakref<window> p_window, weakref<device> p_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
+    : m_window(std::move(p_window))
+    , m_device(std::move(p_device))
     , m_frames_in_flight(frames_in_flight)
     , m_present_mode(present_mode)
 {

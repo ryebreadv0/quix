@@ -8,7 +8,7 @@ class instance;
 
 class buffer_handle {
 public:
-    explicit buffer_handle(std::shared_ptr<device> s_device);
+    explicit buffer_handle(weakref<device> p_device);
 
     ~buffer_handle();
     buffer_handle(const buffer_handle&) = delete;
@@ -31,7 +31,7 @@ public:
     }
 
 private:
-    std::shared_ptr<device> m_device;
+    weakref<device> m_device;
 
     VmaAllocation m_alloc {};
     VmaAllocationInfo m_alloc_info {};

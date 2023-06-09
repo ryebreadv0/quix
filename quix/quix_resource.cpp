@@ -9,8 +9,8 @@
 
 namespace quix {
 
-buffer_handle::buffer_handle(std::shared_ptr<device> s_device)
-    : m_device(std::move(s_device))
+buffer_handle::buffer_handle(weakref<device> p_device)
+    : m_device(std::move(p_device))
 {
 }
 
@@ -95,7 +95,7 @@ void buffer_handle::create_staged_buffer(const VkDeviceSize size, const VkBuffer
     create_buffer(&buffer_info, &alloc_info);
 
     auto cmd_pool = inst->get_command_pool();
-    auto cmd_list = cmd_pool->create_command_list();
+    auto cmd_list = cmd_pool.create_command_list();
 
     cmd_list->begin_record(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 

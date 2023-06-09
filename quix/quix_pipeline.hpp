@@ -12,7 +12,7 @@ namespace graphics {
     class pipeline_manager {
         friend class pipeline_builder;
     public:
-        explicit pipeline_manager(std::shared_ptr<device> s_device);
+        explicit pipeline_manager(weakref<device> s_device);
 
         ~pipeline_manager() = default;
 
@@ -21,11 +21,11 @@ namespace graphics {
         pipeline_manager(pipeline_manager&&) = delete;
         pipeline_manager& operator=(pipeline_manager&&) = delete;
 
-        std::shared_ptr<pipeline_builder> create_pipeline_builder(std::shared_ptr<render_target> render_target);
+        pipeline_builder create_pipeline_builder(render_target* p_render_target);
 
     private:
         std::pmr::monotonic_buffer_resource m_allocator;
-        std::shared_ptr<device> m_device;
+        weakref<device> m_device;
     };
 
 } // namespace graphics
