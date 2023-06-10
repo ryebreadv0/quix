@@ -9,10 +9,10 @@ class swapchain;
 
 template <std::size_t Attachments, std::size_t Subpasses, std::size_t Dependencies>
 struct renderpass_info {
-    std::array<VkAttachmentDescription, Attachments> attachments;
-    std::array<VkAttachmentReference, Attachments> attachments_references;
-    std::array<VkSubpassDescription, Subpasses> subpasses;
-    std::array<VkSubpassDependency, Dependencies> subpass_dependencies;
+    std::array<VkAttachmentDescription, Attachments> attachments{};
+    std::array<VkAttachmentReference, Attachments> attachment_references{};
+    std::array<VkSubpassDescription, Subpasses> subpasses{};
+    std::array<VkSubpassDependency, Dependencies> subpass_dependencies{};
 
     NODISCARD VkRenderPassCreateInfo export_renderpass_info() const noexcept
     {

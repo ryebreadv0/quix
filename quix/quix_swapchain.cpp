@@ -116,7 +116,7 @@ void swapchain::create_image_views()
     createInfo.subresourceRange.baseArrayLayer = 0;
     createInfo.subresourceRange.layerCount = 1;
 
-    for (int i = 0; i < m_swapchain_images.size(); i++) {
+    for (std::size_t i = 0; i < m_swapchain_images.size(); i++) {
         createInfo.image = m_swapchain_images[i];
 
         VK_CHECK(vkCreateImageView(m_device->get_logical_device(), &createInfo, nullptr, &m_swapchain_image_views[i]), "failed to create image views");

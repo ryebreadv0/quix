@@ -107,7 +107,7 @@ namespace graphics {
     {
         create_pipeline_layout(pipeline_layout_info);
         create_pipeline(pipeline_create_info);
-        for (int i = 0; i < pipeline_create_info->stageCount; i++) {
+        for (uint32_t i = 0; i < pipeline_create_info->stageCount; i++) {
             vkDestroyShaderModule(m_device->get_logical_device(), pipeline_create_info->pStages[i].module, nullptr);
         }
     }

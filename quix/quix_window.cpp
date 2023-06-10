@@ -23,7 +23,7 @@ window::window(const char* title, int width, int height)
 
     glfwSetWindowUserPointer(m_window, this);
 
-    glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* p_window, int width, int height) {
+    glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* p_window, int  /*width*/, int /*height*/) {
         auto* instance = static_cast<window*>(glfwGetWindowUserPointer(p_window));
         instance->framebuffer_resized = true;
     });

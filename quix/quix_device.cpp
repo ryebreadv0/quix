@@ -409,7 +409,7 @@ void device::pick_physical_device()
     spdlog::info("Found {} devices", deviceCount);
 
     // rate physicalDevice
-    for (int i = 0; i < deviceCount; i++) {
+    for (uint32_t i = 0; i < deviceCount; i++) {
         int score = rate_physical_device(devices[i]);
         deviceRatings.insert(std::make_pair(score, devices[i]));
     }

@@ -17,7 +17,7 @@ struct vec3 {
         };
         float data[3];
     };
-    NODISCARD inline float operator[](int index) const noexcept { return data[index]; }
+    NODISCARD constexpr inline float operator[](int index) const noexcept { return data[index]; }
 };
 
 struct Vertex {
@@ -67,32 +67,30 @@ int main()
         Vertex { vec3 { 0.5f, 0.5f, 0.0f }, vec3 { 0.0f, 1.0f, 0.0f } },
         Vertex { vec3 { -0.5f, 0.5f, 0.0f }, vec3 { 0.0f, 0.0f, 1.0f } });
 
-    quix::renderpass_info<1, 1, 1> renderpass_info = {
-        { VkAttachmentDescription {
-            .format = instance.get_surface_format().format,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR } },
-        { VkAttachmentReference {
-            .attachment = 0,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } },
-        { VkSubpassDescription {
-            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-            .colorAttachmentCount = 1,
-            .pColorAttachments = &renderpass_info.attachments_references[0] } },
-        { VkSubpassDependency {
-            VK_SUBPASS_EXTERNAL,
-            0,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            0,
-            VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-            0 } }
-    };
+    quix::renderpass_info<1, 1, 1> renderpass_info {};
+    renderpass_info.attachments[0].format = instance.get_surface_format().format;
+    renderpass_info.attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+    renderpass_info.attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    renderpass_info.attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    renderpass_info.attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    renderpass_info.attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    renderpass_info.attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    renderpass_info.attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    renderpass_info.attachment_references[0].attachment = 0;
+    renderpass_info.attachment_references[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    renderpass_info.subpasses[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    renderpass_info.subpasses[0].colorAttachmentCount = 1;
+    renderpass_info.subpasses[0].pColorAttachments = renderpass_info.attachment_references.data();
+
+    renderpass_info.subpass_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    renderpass_info.subpass_dependencies[0].dstSubpass = 0;
+    renderpass_info.subpass_dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    renderpass_info.subpass_dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    renderpass_info.subpass_dependencies[0].srcAccessMask = 0;
+    renderpass_info.subpass_dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    renderpass_info.subpass_dependencies[0].dependencyFlags = 0;
 
     auto render_target = instance.create_render_target(renderpass_info.export_renderpass_info());
 
@@ -136,7 +134,7 @@ int main()
         { { 0.0f, 0.0f, 0.0f, 0.0f } }
     };
 
-    while (window->should_close() == false) {
+    while (!window->should_close()) {
         window->poll_events();
 
         VkResult result = sync_objects.acquire_next_image(current_frame, &current_image_index);

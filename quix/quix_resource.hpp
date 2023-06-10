@@ -18,8 +18,8 @@ public:
 
     void create_buffer(const VkBufferCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
     void create_uniform_buffer(const VkDeviceSize size);
+    void create_cpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const VmaAllocationCreateFlagBits alloc_flags);
     void create_gpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags);
-    void create_staging_buffer(const VkDeviceSize size);
     void create_staged_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const void* data, instance* inst);
 
     NODISCARD inline VkBuffer get_buffer() const noexcept { return m_buffer; }
@@ -31,8 +31,9 @@ public:
     }
 
 private:
-    weakref<device> m_device;
+    void create_staging_buffer(const VkDeviceSize size);
 
+    weakref<device> m_device;
     VmaAllocation m_alloc {};
     VmaAllocationInfo m_alloc_info {};
     VkBuffer m_buffer = VK_NULL_HANDLE;

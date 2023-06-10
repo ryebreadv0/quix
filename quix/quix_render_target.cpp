@@ -3,40 +3,55 @@
 
 #include "quix_render_target.hpp"
 
-#include "quix_window.hpp"
 #include "quix_device.hpp"
 #include "quix_swapchain.hpp"
+#include "quix_window.hpp"
 
 namespace quix {
 
-static constexpr renderpass_info<1, 1, 0> renderpass_info_default = {
-    { VkAttachmentDescription {
-        .format = VK_FORMAT_R8G8B8A8_SRGB,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR } },
-    { VkAttachmentReference {
-        .attachment = 0,
-        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL } },
-    { VkSubpassDescription {
-        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &renderpass_info_default.attachments_references[0] } },
-    {}
-};
+// consteval this shit
+
+[[maybe_unused]] static consteval renderpass_info<1, 1, 1> get_default_renderpass_info()
+{
+    quix::renderpass_info<1, 1, 1> info {};
+    info.attachments[0].format = VK_FORMAT_B8G8R8A8_SRGB;
+    info.attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+    info.attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    info.attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    info.attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    info.attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    info.attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    info.attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+    info.attachment_references[0].attachment = 0;
+    info.attachment_references[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    info.subpasses[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    info.subpasses[0].colorAttachmentCount = 1;
+    info.subpasses[0].pColorAttachments = info.attachment_references.data();
+
+    info.subpass_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    info.subpass_dependencies[0].dstSubpass = 0;
+    info.subpass_dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    info.subpass_dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    info.subpass_dependencies[0].srcAccessMask = 0;
+    info.subpass_dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    info.subpass_dependencies[0].dependencyFlags = 0;
+
+    return info;
+}
 
 render_target::render_target(weakref<window> p_window, weakref<device> p_device, weakref<swapchain> p_swapchain, const VkRenderPassCreateInfo* render_pass_create_info)
-    : m_window(std::move(p_window)), m_device(std::move(p_device)), m_swapchain(std::move(p_swapchain))
+    : m_window(std::move(p_window))
+    , m_device(std::move(p_device))
+    , m_swapchain(std::move(p_swapchain))
 {
     create_renderpass(render_pass_create_info);
     create_framebuffers();
 }
 
-render_target::~render_target() {
+render_target::~render_target()
+{
     destroy_framebuffers();
 
     vkDestroyRenderPass(m_device->get_logical_device(), m_render_pass, nullptr);
@@ -62,7 +77,7 @@ void render_target::recreate_swapchain()
     m_swapchain->recreate_swapchain();
 
     destroy_framebuffers();
-    
+
     create_framebuffers();
 }
 
@@ -81,15 +96,14 @@ void render_target::create_framebuffers()
             swapchain_image_views[i]
         };
 
-        VkFramebufferCreateInfo framebuffer_info {
-            .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-            .renderPass = m_render_pass,
-            .attachmentCount = 1,
-            .pAttachments = attachments,
-            .width = m_swapchain->get_extent().width,
-            .height = m_swapchain->get_extent().height,
-            .layers = 1
-        };
+        VkFramebufferCreateInfo framebuffer_info {};
+        framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebuffer_info.renderPass = m_render_pass;
+        framebuffer_info.attachmentCount = 1;
+        framebuffer_info.pAttachments = attachments;
+        framebuffer_info.width = m_swapchain->get_extent().width;
+        framebuffer_info.height = m_swapchain->get_extent().height;
+        framebuffer_info.layers = 1;
 
         VK_CHECK(vkCreateFramebuffer(m_device->get_logical_device(), &framebuffer_info, nullptr, &m_framebuffers[i]), "failed to create framebuffer");
     }

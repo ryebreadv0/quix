@@ -11,7 +11,7 @@ namespace descriptor {
         friend class allocator;
         friend class builder;
     public:
-        allocator_pool(class allocator* allocator, VkDescriptorPool pool);
+        allocator_pool(allocator* p_allocator, VkDescriptorPool pool);
         ~allocator_pool();
 
         allocator_pool(const allocator_pool&) = delete;
@@ -23,15 +23,15 @@ namespace descriptor {
     private:
         VkDescriptorSet allocate(VkDescriptorSetLayout layout);
 
-        allocator* allocator { nullptr };
+        allocator* m_allocator { nullptr };
         std::deque<VkDescriptorPool> usedPools;
         VkDescriptorPool currentPool { VK_NULL_HANDLE };
     };
 
     class allocator {
-        friend class allocator_pool;
+        friend struct allocator_pool;
     public:
-        allocator(VkDevice device);
+        explicit allocator(VkDevice device);
 
         ~allocator();
         allocator(const allocator&) = delete;

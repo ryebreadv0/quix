@@ -26,51 +26,45 @@ void buffer_handle::create_buffer(const VkBufferCreateInfo* create_info, const V
 
 void buffer_handle::create_uniform_buffer(const VkDeviceSize size)
 {
-    VkBufferCreateInfo buffer_info {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = size,
-        .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-    };
+    VkBufferCreateInfo buffer_info {};
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size = size;
+    buffer_info.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VmaAllocationCreateInfo alloc_info {
-        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-        .usage = VMA_MEMORY_USAGE_AUTO,
-    };
+    VmaAllocationCreateInfo alloc_info {};
+    alloc_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+    alloc_info.usage = VMA_MEMORY_USAGE_AUTO;
+
+    create_buffer(&buffer_info, &alloc_info);
+}
+
+void buffer_handle::create_cpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const VmaAllocationCreateFlagBits alloc_flags)
+{
+    VkBufferCreateInfo buffer_info {};
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size = size;
+    buffer_info.usage = usage_flags;
+    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo alloc_info {};
+    alloc_info.flags = alloc_flags;
+    alloc_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 
     create_buffer(&buffer_info, &alloc_info);
 }
 
 void buffer_handle::create_gpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags)
 {
-    VkBufferCreateInfo buffer_info {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = size,
-        .usage = usage_flags,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-    };
+    VkBufferCreateInfo buffer_info {};
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size = size;
+    buffer_info.usage = usage_flags;
+    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VmaAllocationCreateInfo alloc_info {
-        .flags = 0,
-        .usage = VMA_MEMORY_USAGE_GPU_ONLY,
-    };
-
-    create_buffer(&buffer_info, &alloc_info);
-}
-
-void buffer_handle::create_staging_buffer(const VkDeviceSize size)
-{
-    VkBufferCreateInfo buffer_info {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = size,
-        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-    };
-
-    VmaAllocationCreateInfo alloc_info {
-        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
-        .usage = VMA_MEMORY_USAGE_CPU_TO_GPU,
-    };
+    VmaAllocationCreateInfo alloc_info {};
+    alloc_info.flags = 0;
+    alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     create_buffer(&buffer_info, &alloc_info);
 }
@@ -81,16 +75,14 @@ void buffer_handle::create_staged_buffer(const VkDeviceSize size, const VkBuffer
     staging_buffer.create_staging_buffer(size);
     memcpy(staging_buffer.get_mapped_data(), data, size);
 
-    VkBufferCreateInfo buffer_info {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = size,
-        .usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage_flags,
-        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-    };
+    VkBufferCreateInfo buffer_info {};
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size = size;
+    buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage_flags;
+    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    VmaAllocationCreateInfo alloc_info {
-        .usage = VMA_MEMORY_USAGE_GPU_ONLY,
-    };
+    VmaAllocationCreateInfo alloc_info {};
+    alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     create_buffer(&buffer_info, &alloc_info);
 
@@ -102,6 +94,21 @@ void buffer_handle::create_staged_buffer(const VkDeviceSize size, const VkBuffer
     cmd_list->copy_buffer_to_buffer(staging_buffer.get_buffer(), 0, m_buffer, 0, size);
 
     cmd_list->end_record();
+}
+
+void buffer_handle::create_staging_buffer(const VkDeviceSize size)
+{
+    VkBufferCreateInfo buffer_info {};
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size = size;
+    buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo alloc_info {};
+    alloc_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+    alloc_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+    create_buffer(&buffer_info, &alloc_info);
 }
 
 } // namespace quix

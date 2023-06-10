@@ -99,31 +99,31 @@ constexpr inline void quix_error(StrType error, const char* file, int line) noex
 template <typename Type>
 struct weakref {
     // a weak reference that does not own the pointer
-    constexpr explicit weakref<Type>(Type* ptr)
+    constexpr explicit weakref(Type* ptr)
         : ptr(ptr)
     {
     }
-    constexpr explicit weakref<Type>(const std::shared_ptr<Type>& ptr)
+    constexpr explicit weakref(const std::shared_ptr<Type>& ptr)
         : ptr(ptr.get())
     {
     }
-    constexpr explicit weakref<Type>(const std::unique_ptr<Type>& ptr)
+    constexpr explicit weakref(const std::unique_ptr<Type>& ptr)
         : ptr(ptr.get())
     {
     }
-    constexpr explicit weakref<Type>(const allocated_unique_ptr<Type>& ptr)
+    constexpr explicit weakref(const allocated_unique_ptr<Type>& ptr)
         : ptr(ptr.get())
     {
     }
 
-    ~weakref<Type>() = default;
-    weakref<Type>(const weakref<Type>& other)
+    ~weakref() = default;
+    weakref(const weakref& other)
         : ptr(other.ptr)
     {
     }
-    weakref<Type>& operator=(const weakref<Type>& other) = default;
-    weakref<Type>(weakref<Type>&& other) noexcept = default;
-    weakref<Type>& operator=(weakref<Type>&& other) noexcept = default;
+    weakref& operator=(const weakref& other) = default;
+    weakref(weakref&& other) noexcept = default;
+    weakref& operator=(weakref&& other) noexcept = default;
 
     NODISCARD constexpr inline Type* get() const noexcept { return ptr; }
     NODISCARD constexpr inline Type* operator->() const noexcept { return ptr; }

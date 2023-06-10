@@ -55,14 +55,14 @@ private:
 
     NODISCARD weakref<device> get_device() const noexcept;
 
-    std::pmr::monotonic_buffer_resource m_allocator;
+    static constexpr std::size_t m_buffer_size = 1000;
+    std::array<char, m_buffer_size> m_buffer{};
+    std::pmr::monotonic_buffer_resource m_allocator{m_buffer.data(), m_buffer_size};
 
     allocated_unique_ptr<window> m_window;
     allocated_unique_ptr<device> m_device;
     allocated_unique_ptr<swapchain> m_swapchain;
     allocated_unique_ptr<graphics::pipeline_manager> m_pipeline_manager;
-
-    
     allocated_unique_ptr<descriptor::allocator> m_descriptor_allocator;
     allocated_unique_ptr<descriptor::layout_cache> m_descriptor_layout_cache;
 };

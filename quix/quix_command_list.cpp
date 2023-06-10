@@ -85,7 +85,7 @@ void sync::create_sync_objects()
 {
     m_sync_buffer = malloc(sizeof(VkSemaphore) * (m_frames_in_flight * 2) + sizeof(VkFence) * m_frames_in_flight);
     quix_assert(m_sync_buffer != nullptr, "failed to allocate memory for synchronization objects");
-    
+
     m_fences = (VkFence*)m_sync_buffer;
     m_available_semaphores = (VkSemaphore*)((char*)m_sync_buffer + sizeof(VkFence) * m_frames_in_flight);
     m_finished_semaphores = (VkSemaphore*)((char*)m_sync_buffer + sizeof(VkFence) * m_frames_in_flight + sizeof(VkSemaphore) * m_frames_in_flight);
@@ -97,7 +97,7 @@ void sync::create_sync_objects()
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    for (size_t i = 0; i < m_frames_in_flight; i++) {
+    for (int i = 0; i < m_frames_in_flight; i++) {
         VK_CHECK(vkCreateSemaphore(m_device->get_logical_device(), &semaphoreInfo, nullptr, &m_available_semaphores[i]), "failed to create semaphore");
         VK_CHECK(vkCreateSemaphore(m_device->get_logical_device(), &semaphoreInfo, nullptr, &m_finished_semaphores[i]), "failed to create semaphore");
         VK_CHECK(vkCreateFence(m_device->get_logical_device(), &fenceInfo, nullptr, &m_fences[i]), "failed to create fence");
@@ -106,7 +106,7 @@ void sync::create_sync_objects()
 
 void sync::destroy_sync_objects()
 {
-    for (size_t i = 0; i < m_frames_in_flight; i++) {
+    for (int i = 0; i < m_frames_in_flight; i++) {
         vkDestroySemaphore(m_device->get_logical_device(), m_available_semaphores[i], nullptr);
         vkDestroySemaphore(m_device->get_logical_device(), m_finished_semaphores[i], nullptr);
         vkDestroyFence(m_device->get_logical_device(), m_fences[i], nullptr);
@@ -122,14 +122,13 @@ command_list::command_list(weakref<device> p_device, VkCommandBuffer buffer)
 
 void command_list::begin_record(VkCommandBufferUsageFlags flags)
 {
-    VkCommandBufferBeginInfo begin_info {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        /*VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT: The command buffer will be rerecorded right after executing it once.
-          VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT: This is a secondary command buffer that will be entirely within a single render pass.
-          VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT: The command buffer can be resubmitted while it is also already pending execution. */
-        .flags = flags,
-        .pInheritanceInfo = nullptr // for secondary command buffers
-    };
+    VkCommandBufferBeginInfo begin_info {};
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    /*VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT: The command buffer will be rerecorded right after executing it once.
+      VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT: This is a secondary command buffer that will be entirely within a single render pass.
+      VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT: The command buffer can be resubmitted while it is also already pending execution. */
+    begin_info.flags = flags;
+    begin_info.pInheritanceInfo = nullptr; // for secondary command buffers
 
     VK_CHECK(vkBeginCommandBuffer(buffer, &begin_info), "failed to begin command buffer record");
 }
@@ -141,36 +140,34 @@ void command_list::end_record()
 
 void command_list::begin_render_pass(const render_target& r_target, const std::shared_ptr<graphics::pipeline>& p_pipeline, uint32_t image_index, VkClearValue* clear_value, uint32_t clear_value_count)
 {
-    VkRenderPassBeginInfo render_pass_begin_info {
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-        .renderPass = r_target.get_render_pass(),
-        .framebuffer = r_target.get_framebuffer(image_index),
-        .renderArea = {
-            .offset = { 0, 0 },
-            .extent = r_target.get_extent() },
-        .clearValueCount = clear_value_count,
-        .pClearValues = clear_value
-    };
+    VkRenderPassBeginInfo render_pass_begin_info {};
+    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    render_pass_begin_info.renderPass = r_target.get_render_pass();
+    render_pass_begin_info.framebuffer = r_target.get_framebuffer(image_index);
+    VkRect2D render_area {};
+    render_area.offset = { 0, 0 };
+    render_area.extent = r_target.get_extent();
+    render_pass_begin_info.renderArea = render_area;
+    render_pass_begin_info.clearValueCount = clear_value_count;
+    render_pass_begin_info.pClearValues = clear_value;
 
     vkCmdBeginRenderPass(buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
     vkCmdBindPipeline(buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, p_pipeline->get_pipeline());
 
-    VkViewport viewport {
-        .x = 0.0f,
-        .y = 0.0f,
-        .width = static_cast<float>(r_target.get_extent().width),
-        .height = static_cast<float>(r_target.get_extent().height),
-        .minDepth = 0.0f,
-        .maxDepth = 1.0f
-    };
+    VkViewport viewport {};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(r_target.get_extent().width);
+    viewport.height = static_cast<float>(r_target.get_extent().height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0;
 
     vkCmdSetViewport(buffer, 0, 1, &viewport);
 
-    VkRect2D scissor {
-        .offset = { 0, 0 },
-        .extent = r_target.get_extent()
-    };
+    VkRect2D scissor {};
+    scissor.offset = { 0, 0 };
+    scissor.extent = r_target.get_extent();
 
     vkCmdSetScissor(buffer, 0, 1, &scissor);
 }
@@ -182,12 +179,11 @@ void command_list::end_render_pass()
 
 void command_list::copy_buffer_to_buffer(VkBuffer src_buffer, VkDeviceSize src_offset, VkBuffer dst_buffer, VkDeviceSize dst_offset, VkDeviceSize size)
 {
-    VkBufferCopy copyRegion{
-        .srcOffset = src_offset,
-        .dstOffset = dst_offset,
-        .size = size,
-    };
-    
+    VkBufferCopy copyRegion {};
+    copyRegion.srcOffset = src_offset;
+    copyRegion.dstOffset = dst_offset;
+    copyRegion.size = size;
+
     vkCmdCopyBuffer(buffer, src_buffer, dst_buffer, 1, &copyRegion);
 }
 
@@ -204,12 +200,11 @@ command_pool::~command_pool()
 
 NODISCARD allocated_unique_ptr<command_list> command_pool::create_command_list(VkCommandBufferLevel level)
 {
-    VkCommandBufferAllocateInfo alloc_info {
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .commandPool = pool,
-        .level = level,
-        .commandBufferCount = 1
-    };
+    VkCommandBufferAllocateInfo alloc_info {};
+    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    alloc_info.commandPool = pool;
+    alloc_info.level = level;
+    alloc_info.commandBufferCount = 1;
 
     VkCommandBuffer buffer = VK_NULL_HANDLE;
     vkAllocateCommandBuffers(m_device->get_logical_device(), &alloc_info, &buffer);

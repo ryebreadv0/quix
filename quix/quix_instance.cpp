@@ -14,6 +14,16 @@
 
 namespace quix {
 
+consteval std::size_t get_allocation_size()
+{
+    return sizeof(window) + 
+           sizeof(device) + 
+           sizeof(swapchain) + 
+           sizeof(graphics::pipeline_manager) + 
+           sizeof(descriptor::allocator) + 
+           sizeof(descriptor::layout_cache);
+}
+
 instance::instance(const char* app_name,
     uint32_t app_version,
     int width,
@@ -29,7 +39,10 @@ instance::instance(const char* app_name,
     , m_pipeline_manager(nullptr)
     , m_descriptor_allocator(nullptr)
     , m_descriptor_layout_cache(nullptr)
-{
+{ 
+    static_assert(get_allocation_size()
+                   <= m_buffer_size, 
+                   "instance buffer size is too small");
 }
 
 instance::~instance() = default;

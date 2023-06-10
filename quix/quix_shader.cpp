@@ -77,15 +77,16 @@ void shader::loadSpvCode(const char* file)
     FILE* handle = fopen(file, "rb");
     quix_assert(handle != nullptr, "failed to open file");
 
-    fseek(handle, 0, SEEK_END);
+    (void)fseek(handle, 0, SEEK_END);
     size_t fileSize = ftell(handle);
-    fseek(handle, 0, SEEK_SET);
+    (void)fseek(handle, 0, SEEK_SET);
 
     // this might cause errors if the file is not a multiple of 4 bytes
     code.resize(fileSize / sizeof(uint32_t));
-    size_t readSize = fread(code.data(), sizeof(uint32_t), fileSize / sizeof(uint32_t), handle);
+    (void)fread(code.data(), sizeof(uint32_t), fileSize / sizeof(uint32_t), handle);
 
-    fclose(handle);
+    auto result= fclose(handle);
+    quix_assert(result == 0, "failed to close file");
 }
 
 void shader::saveSpvCode(const char* file)
@@ -94,7 +95,7 @@ void shader::saveSpvCode(const char* file)
     FILE* handle = fopen(file, "wb");
     quix_assert(handle != nullptr, "failed to open file");
 
-    size_t writeSize = fwrite(code.data(), sizeof(uint32_t), code.size(), handle);
+    (void)fwrite(code.data(), sizeof(uint32_t), code.size(), handle);
 
     fclose(handle);
 }
@@ -157,15 +158,15 @@ void shader::compileShader(EShLanguage stage, const char* path, const char* cSpv
     spvtools::Optimizer optimizer(SPV_ENV_UNIVERSAL_1_3);
     optimizer.SetMessageConsumer([](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message) {
         if (level == SPV_MSG_FATAL || level == SPV_MSG_INTERNAL_ERROR) {
-            quix_error(fmt::format("fatal error: {}", message));
+            quix_error(fmt::format("fatal error: {} {}", source, message));
         } else if (level == SPV_MSG_ERROR) {
-            spdlog::error("{}: {}", position.index, message);
+            spdlog::error("{} {}: {}", source, position.index, message);
         } else if (level == SPV_MSG_WARNING) {
-            spdlog::warn("{}: {}", position.index, message);
+            spdlog::warn("{} {}: {}", source, position.index, message);
         } else if (level == SPV_MSG_INFO) {
-            spdlog::info("{}: {}", position.index, message);
+            spdlog::info("{} {}: {}", source, position.index, message);
         } else if (level == SPV_MSG_DEBUG) {
-            spdlog::debug("{}: {}", position.index, message);
+            spdlog::debug("{} {}: {}", source, position.index, message);
         }
     });
 
@@ -186,15 +187,15 @@ void shader::compileShader(EShLanguage stage, const char* path, const char* cSpv
     spvtools::SpirvTools core(SPV_ENV_UNIVERSAL_1_3);
     core.SetMessageConsumer([](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message) {
         if (level == SPV_MSG_FATAL || level == SPV_MSG_INTERNAL_ERROR) {
-            quix_error(fmt::format("fatal error, {}", message));
+            quix_error(fmt::format("fatal error: {} {}", source, message));
         } else if (level == SPV_MSG_ERROR) {
-            spdlog::error("{}: {}", position.index, message);
+            spdlog::error("{} {}: {}", source, position.index, message);
         } else if (level == SPV_MSG_WARNING) {
-            spdlog::warn("{}: {}", position.index, message);
+            spdlog::warn("{} {}: {}", source, position.index, message);
         } else if (level == SPV_MSG_INFO) {
-            spdlog::info("{}: {}", position.index, message);
+            spdlog::info("{} {}: {}", source, position.index, message);
         } else if (level == SPV_MSG_DEBUG) {
-            spdlog::debug("{}: {}", position.index, message);
+            spdlog::debug("{} {}: {}", source, position.index, message);
         }
     });
 
@@ -219,7 +220,7 @@ const std::string shader::getSourceCode(const char* path)
 
     std::string source;
     source.resize(fileSize);
-    size_t readSize = fread(source.data(), sizeof(char), fileSize, file);
+    (void)fread(source.data(), sizeof(char), fileSize, file);
     // printf("readSize: %zu\n", readSize);
 
     return source;

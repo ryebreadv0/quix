@@ -7,8 +7,8 @@ namespace quix::descriptor {
 
     // allocator_pool struct start
 
-    allocator_pool::allocator_pool(quix::descriptor::allocator* allocator, VkDescriptorPool pool)
-        : allocator(allocator)
+    allocator_pool::allocator_pool(quix::descriptor::allocator* p_allocator, VkDescriptorPool pool)
+        : m_allocator(p_allocator)
         , currentPool(pool)
     {
     }
@@ -24,14 +24,14 @@ namespace quix::descriptor {
             spdlog::warn("Pool already freed");
             return;
         }
-        allocator->returnPool(*this);
+        m_allocator->returnPool(*this);
     }
 
     VkDescriptorSet allocator_pool::allocate(VkDescriptorSetLayout layout)
     {
         VkDescriptorSet set;
         if (currentPool == VK_NULL_HANDLE) {
-            currentPool = allocator->borrowPool();
+            currentPool = m_allocator->borrowPool();
         }
 
         VkDescriptorSetAllocateInfo allocInfo = {};
@@ -43,7 +43,7 @@ namespace quix::descriptor {
         allocInfo.descriptorSetCount = 1;
 
         // try to allocate the descriptor set
-        VkResult allocResult = vkAllocateDescriptorSets(allocator->device, &allocInfo, &set);
+        VkResult allocResult = vkAllocateDescriptorSets(m_allocator->device, &allocInfo, &set);
         bool needReallocate = false;
 
         switch (allocResult) {
@@ -63,9 +63,9 @@ namespace quix::descriptor {
         if (needReallocate) {
             // allocate a new pool and retry
             usedPools.push_back(currentPool);
-            currentPool = allocator->borrowPool();
+            currentPool = m_allocator->borrowPool();
 
-            allocResult = vkAllocateDescriptorSets(allocator->device, &allocInfo, &set);
+            allocResult = vkAllocateDescriptorSets(m_allocator->device, &allocInfo, &set);
 
             // if it still fails then we have big issues
             if (allocResult == VK_SUCCESS) {
@@ -125,7 +125,7 @@ namespace quix::descriptor {
     {
         auto* sizes = (VkDescriptorPoolSize*)alloca(s_PoolSizes.sizes.size() * sizeof(VkDescriptorPoolSize));
 
-        for (int i = 0; i < s_PoolSizes.sizes.size(); i++) {
+        for (std::size_t i = 0; i < s_PoolSizes.sizes.size(); i++) {
             sizes[i] = { s_PoolSizes.sizes[i].first, static_cast<uint32_t>(s_PoolSizes.sizes[i].second * count) };
         }
 
@@ -200,10 +200,10 @@ namespace quix::descriptor {
         descriptor_layout_info layoutinfo;
         layoutinfo.bindings.reserve(info->bindingCount);
         bool isSorted = true;
-        int lastBinding = -1;
+        uint32_t lastBinding = -1;
 
         // copy from the direct info struct into our own one
-        for (int i = 0; i < info->bindingCount; i++) {
+        for (uint32_t i = 0; i < info->bindingCount; i++) {
             layoutinfo.bindings.push_back(info->pBindings[i]);
 
             // check that the bindings are in strict increasing order
@@ -244,7 +244,7 @@ namespace quix::descriptor {
             return false;
         } else {
             // compare each of the bindings is the same. Bindings are sorted so they will match
-            for (int i = 0; i < bindings.size(); i++) {
+            for (std::size_t i = 0; i < bindings.size(); i++) {
                 if (other.bindings[i].binding != bindings[i].binding) {
                     return false;
                 }
@@ -285,9 +285,9 @@ namespace quix::descriptor {
     // builder class start
 
     builder::builder(layout_cache* layoutCache, allocator_pool* pool)
-        : cache(layoutCache)
+        : layout(VK_NULL_HANDLE)
+        , cache(layoutCache)
         , alloc(pool)
-        , layout(VK_NULL_HANDLE)
     {
     }
 
@@ -386,7 +386,7 @@ namespace quix::descriptor {
             w.dstSet = set;
         }
 
-        vkUpdateDescriptorSets(alloc->allocator->getDevice(), writes.size(), writes.data(), 0, nullptr);
+        vkUpdateDescriptorSets(alloc->m_allocator->getDevice(), writes.size(), writes.data(), 0, nullptr);
 
         return set;
     }

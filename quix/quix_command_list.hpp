@@ -64,8 +64,8 @@ public:
     void copy_buffer_to_buffer(VkBuffer src_buffer, VkDeviceSize src_offset, VkBuffer dst_buffer, VkDeviceSize dst_offset, VkDeviceSize size);
 
 private:
-    VkCommandBuffer buffer;
     weakref<device> m_device;
+    VkCommandBuffer buffer;
 };
 
 class command_pool {
