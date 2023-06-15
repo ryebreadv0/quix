@@ -32,28 +32,36 @@ add_subdirectory(quix_vma)
 add_subdirectory(quix)
 
 
+set(BUILD_QUIX_EXAMPLE ON CACHE BOOL "Build quix example")
 
-project(quix_example)
+if (BUILD_QUIX_EXAMPLE)
+    project(quix_example)
 
-add_executable(quix_example 
-    examples/main.cpp
-)
+    add_executable(quix_example 
+        examples/main.cpp
+    )
 
-target_link_libraries(quix_example 
-    quix
-)
+    target_link_libraries(quix_example 
+        quix
+    )
 
-target_include_directories(quix_example 
-    PUBLIC ${PROJECT_SOURCE_DIR}/quix
-    PUBLIC ${PROJECT_SOURCE_DIR}/include
-)
+    target_include_directories(quix_example 
+        PUBLIC ${PROJECT_SOURCE_DIR}/quix
+        PUBLIC ${PROJECT_SOURCE_DIR}/include
+    )
 
-# copy compile_commands.json from build dir to ../compile_commands.json
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        COMPILE_OPTIONS -fsanitize=address
+        LINK_OPTIONS -fsanitize=address
+    )
 
-add_custom_command(TARGET quix_example POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_BINARY_DIR}/compile_commands.json
-        ${CMAKE_SOURCE_DIR}/build/compile_commands.json
-)
+    # copy compile_commands.json from build dir to ../compile_commands.json
+
+    add_custom_command(TARGET quix_example POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_BINARY_DIR}/compile_commands.json
+            ${CMAKE_SOURCE_DIR}/build/compile_commands.json
+    )
+endif()
 
 

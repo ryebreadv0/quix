@@ -90,10 +90,9 @@ void buffer_handle::create_staged_buffer(const VkDeviceSize size, const VkBuffer
     auto cmd_list = cmd_pool.create_command_list();
 
     cmd_list->begin_record(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
     cmd_list->copy_buffer_to_buffer(staging_buffer.get_buffer(), 0, m_buffer, 0, size);
-
     cmd_list->end_record();
+    cmd_list->submit();
 }
 
 void buffer_handle::create_staging_buffer(const VkDeviceSize size)

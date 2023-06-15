@@ -33,6 +33,8 @@ public:
         }
     }
 
+    // if I ever care about speed I am just going to write my own windowing library, 
+    // the default interface is terrible and I refuse to not use it this way.
     inline void set_key_callback(std::function<void(GLFWwindow*, int, int, int, int)> callback) noexcept
     {
         if (key_callback == nullptr)

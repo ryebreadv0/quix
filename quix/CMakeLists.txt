@@ -24,10 +24,10 @@ add_library(${PROJECT_NAME}
     quix_resource.cpp
 )
 
-# set_target_properties(${PROJECT_NAME} PROPERTIES
-#     COMPILE_OPTIONS -fsanitize=address
-#     LINK_OPTIONS -fsanitize=address
-# )
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    COMPILE_OPTIONS -fsanitize=address
+    LINK_OPTIONS -fsanitize=address
+)
 
 target_precompile_headers(${PROJECT_NAME} 
     PUBLIC quix_pch.hpp

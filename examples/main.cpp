@@ -5,6 +5,7 @@
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"
 #include "quix_window.hpp"
+#include "quix_resource.hpp"
 
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
@@ -67,6 +68,12 @@ int main()
         Vertex { vec3 { 0.5f, 0.5f, 0.0f }, vec3 { 0.0f, 1.0f, 0.0f } },
         Vertex { vec3 { -0.5f, 0.5f, 0.0f }, vec3 { 0.0f, 0.0f, 1.0f } });
 
+    auto vertex_buffer = instance.create_buffer_handle();
+    vertex_buffer.create_staged_buffer(sizeof(Vertex) * vertices.size(),
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        vertices.data(),
+        &instance);
+    
     quix::renderpass_info<1, 1, 1> renderpass_info {};
     renderpass_info.attachments[0].format = instance.get_surface_format().format;
     renderpass_info.attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -134,6 +141,9 @@ int main()
         { { 0.0f, 0.0f, 0.0f, 0.0f } }
     };
 
+    std::array<VkBuffer, 1> vertex_buffer_array = { vertex_buffer.get_buffer() };
+    std::array<VkDeviceSize, 1> offsets = { 0 };
+
     while (!window->should_close()) {
         window->poll_events();
 
@@ -150,7 +160,9 @@ int main()
 
         command_lists[current_frame]->begin_render_pass(render_target, pipeline, current_image_index, clear_values.data(), clear_values.size());
 
-        vkCmdDraw(command_lists[current_frame]->get_cmd_buffer(), 3, 1, 0, 0);
+        vkCmdBindVertexBuffers(command_lists[current_frame]->get_cmd_buffer(), 0, vertex_buffer_array.size(), vertex_buffer_array.data(), offsets.data());
+
+        vkCmdDraw(command_lists[current_frame]->get_cmd_buffer(), vertices.size(), 1, 0, 0);
 
         command_lists[current_frame]->end_render_pass();
 

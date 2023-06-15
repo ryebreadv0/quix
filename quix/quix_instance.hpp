@@ -22,6 +22,8 @@ namespace descriptor {
 class sync;
 class command_pool;
 
+class buffer_handle;
+
 class instance {
 public:
     instance(const char* app_name, uint32_t app_version, int width, int height);
@@ -37,6 +39,8 @@ public:
     void create_pipeline_manager();
     NODISCARD render_target create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) noexcept;
     NODISCARD sync create_sync_objects() noexcept;
+    
+    NODISCARD buffer_handle create_buffer_handle() const noexcept;
 
     void wait_idle();
 
@@ -49,6 +53,7 @@ public:
 
     NODISCARD descriptor::allocator_pool get_descriptor_allocator_pool() const noexcept;
     NODISCARD descriptor::builder get_descriptor_builder(descriptor::allocator_pool* allocator_pool) const noexcept;
+
 
 private:
     friend class swapchain;

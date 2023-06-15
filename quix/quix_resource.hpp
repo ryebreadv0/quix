@@ -29,6 +29,7 @@ public:
         quix_assert(m_alloc_info.pMappedData != nullptr, "buffer is not mapped");
         return m_alloc_info.pMappedData;
     }
+    NODISCARD inline uint32_t get_offset() const noexcept { return m_alloc_info.offset; }
 
 private:
     void create_staging_buffer(const VkDeviceSize size);

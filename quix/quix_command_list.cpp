@@ -187,6 +187,18 @@ void command_list::copy_buffer_to_buffer(VkBuffer src_buffer, VkDeviceSize src_o
     vkCmdCopyBuffer(buffer, src_buffer, dst_buffer, 1, &copyRegion);
 }
 
+void command_list::submit()
+{
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &buffer;
+
+    VK_CHECK(vkQueueSubmit(m_device->get_graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE), "failed to submit command buffer");
+
+    vkQueueWaitIdle(m_device->get_graphics_queue());
+}
+
 command_pool::command_pool(weakref<device> p_device, VkCommandPool pool)
     : m_device(std::move(p_device))
     , pool(pool)

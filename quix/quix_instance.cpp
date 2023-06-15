@@ -11,6 +11,7 @@
 #include "quix_render_target.hpp"
 #include "quix_swapchain.hpp"
 #include "quix_window.hpp"
+#include "quix_resource.hpp"
 
 namespace quix {
 
@@ -87,6 +88,13 @@ NODISCARD sync instance::create_sync_objects() noexcept
     return sync {
         make_weakref<device>(m_device),
         make_weakref<swapchain>(m_swapchain)};
+}
+
+NODISCARD buffer_handle instance::create_buffer_handle() const noexcept
+{
+    return buffer_handle {
+        make_weakref<device>(m_device),
+        };
 }
 
 void instance::wait_idle()
