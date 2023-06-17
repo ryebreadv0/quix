@@ -7,6 +7,7 @@ find_package(spdlog REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(glfw REQUIRED)
 find_package(glslang REQUIRED)
+find_package(stb REQUIRED)
 
 project(quix)
 
@@ -37,7 +38,7 @@ target_link_libraries(${PROJECT_NAME}
     spdlog::spdlog
     Vulkan::Vulkan
     glfw
-    quix_vma
+    quix_impl
     glslang
     glslang-default-resource-limits
     OGLCompiler
@@ -53,4 +54,5 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC ${spdlog_SOURCE_DIRS}/include
     PUBLIC ${Vulkan_INCLUDE_DIRS}
     PUBLIC ${glfw_SOURCE_DIRS}/include
+    PUBLIC ${stb_SOURCE_DIR}
 )

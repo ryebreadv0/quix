@@ -14,6 +14,8 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
+#include <stb_image.h>
+
 #include <algorithm>
 #include <deque>
 #include <functional>

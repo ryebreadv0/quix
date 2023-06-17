@@ -18,6 +18,7 @@ public:
 
     void create_buffer(const VkBufferCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
     void create_uniform_buffer(const VkDeviceSize size);
+    void create_staging_buffer(const VkDeviceSize size);
     void create_cpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const VmaAllocationCreateFlagBits alloc_flags);
     void create_gpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags);
     void create_staged_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const void* data, instance* inst);
@@ -32,7 +33,6 @@ public:
     NODISCARD inline VkDeviceSize get_offset() const noexcept { return m_alloc_info.offset; }
 
 private:
-    void create_staging_buffer(const VkDeviceSize size);
 
     weakref<device> m_device;
     VmaAllocation m_alloc {};
@@ -51,7 +51,6 @@ public:
     image_handle& operator=(image_handle&&) = delete;
 
     void create_image(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
-    
 
     void create_view(const VkImageViewCreateInfo* create_info);
     void create_sampler(const VkSamplerCreateInfo* create_info);

@@ -8,6 +8,7 @@ message("IPO enabled? ${CMAKE_INTERPROCEDURAL_OPTIMIZATION}")
 
 include(cmake/CPM.cmake)
 
+CPMAddPackage("gh:nothings/stb#master")
 CPMAddPackage("gh:gabime/spdlog@1.11.0")
 CPMAddPackage("gh:glfw/glfw#3.3.8")
 CPMAddPackage(
@@ -29,7 +30,7 @@ execute_process(
 )
 add_subdirectory(${glslang_SOURCE_DIR} ${glslang_BINARY_DIR})
 
-add_subdirectory(quix_vma)
+add_subdirectory(quix_impl)
 add_subdirectory(quix)
 
 
