@@ -6,6 +6,7 @@
 #include "quix_command_list.hpp"
 #include "quix_device.hpp"
 #include "quix_instance.hpp"
+#include <vulkan/vulkan_core.h>
 
 namespace quix {
 
@@ -16,7 +17,11 @@ buffer_handle::buffer_handle(weakref<device> p_device)
 
 buffer_handle::~buffer_handle()
 {
-    vmaDestroyBuffer(m_device->get_allocator(), m_buffer, m_alloc);
+    if (m_buffer != VK_NULL_HANDLE) {
+        vmaDestroyBuffer(m_device->get_allocator(), m_buffer, m_alloc);
+    } else {
+        spdlog::warn("buffer was never created");
+    }
 }
 
 void buffer_handle::create_buffer(const VkBufferCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info)
@@ -108,6 +113,43 @@ void buffer_handle::create_staging_buffer(const VkDeviceSize size)
     alloc_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
     create_buffer(&buffer_info, &alloc_info);
+}
+
+image_handle::image_handle(weakref<device> p_device)
+    : m_device(std::move(p_device))
+{
+}
+
+image_handle::~image_handle()
+{
+    if (m_sampler != VK_NULL_HANDLE) {
+        vkDestroySampler(m_device->get_logical_device(), m_sampler, nullptr);
+    }
+
+    if (m_view != VK_NULL_HANDLE) {
+        vkDestroyImageView(m_device->get_logical_device(), m_view, nullptr);
+    }
+
+    if (m_image != VK_NULL_HANDLE) {
+        vmaDestroyImage(m_device->get_allocator(), m_image, m_alloc);
+    } else {
+        spdlog::warn("image was never created");
+    }
+}
+
+void image_handle::create_image(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info)
+{
+    VK_CHECK(vmaCreateImage(m_device->get_allocator(), create_info, alloc_info, &m_image, &m_alloc, &m_alloc_info), "failed to create image");
+}
+
+void image_handle::create_view(const VkImageViewCreateInfo* create_info)
+{
+    VK_CHECK(vkCreateImageView(m_device->get_logical_device(), create_info, nullptr, &m_view), "failed to create image view");
+}
+
+void image_handle::create_sampler(const VkSamplerCreateInfo* create_info)
+{
+    VK_CHECK(vkCreateSampler(m_device->get_logical_device(), create_info, nullptr, &m_sampler), "failed to create sampler");
 }
 
 } // namespace quix

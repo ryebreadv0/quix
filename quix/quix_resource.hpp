@@ -29,7 +29,7 @@ public:
         quix_assert(m_alloc_info.pMappedData != nullptr, "buffer is not mapped");
         return m_alloc_info.pMappedData;
     }
-    NODISCARD inline uint32_t get_offset() const noexcept { return m_alloc_info.offset; }
+    NODISCARD inline VkDeviceSize get_offset() const noexcept { return m_alloc_info.offset; }
 
 private:
     void create_staging_buffer(const VkDeviceSize size);
@@ -38,6 +38,31 @@ private:
     VmaAllocation m_alloc {};
     VmaAllocationInfo m_alloc_info {};
     VkBuffer m_buffer = VK_NULL_HANDLE;
+};
+
+class image_handle {
+public:
+    explicit image_handle(weakref<device> p_device);
+
+    ~image_handle();
+    image_handle(const image_handle&) = delete;
+    image_handle& operator=(const image_handle&) = delete;
+    image_handle(image_handle&&) = delete;
+    image_handle& operator=(image_handle&&) = delete;
+
+    void create_image(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
+    
+
+    void create_view(const VkImageViewCreateInfo* create_info);
+    void create_sampler(const VkSamplerCreateInfo* create_info);
+
+private:
+    weakref<device> m_device;
+    VmaAllocation m_alloc {};
+    VmaAllocationInfo m_alloc_info {};
+    VkImage m_image = VK_NULL_HANDLE;
+    VkImageView m_view = VK_NULL_HANDLE;
+    VkSampler m_sampler = VK_NULL_HANDLE;
 };
 
 } // namespace quix

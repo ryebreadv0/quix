@@ -7,6 +7,7 @@ endif()
 message("IPO enabled? ${CMAKE_INTERPROCEDURAL_OPTIMIZATION}")
 
 include(cmake/CPM.cmake)
+
 CPMAddPackage("gh:gabime/spdlog@1.11.0")
 CPMAddPackage("gh:glfw/glfw#3.3.8")
 CPMAddPackage(
