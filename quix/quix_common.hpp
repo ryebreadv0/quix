@@ -74,7 +74,7 @@ concept EvaluatableBoolean = requires(BoolType cond) {
 };
 
 template <typename BoolType, typename StrType>
-constexpr inline void quix_assert(BoolType cond, StrType error, const char* cond_string, const char* file, int line) noexcept(true)
+constexpr inline void quix_assert(BoolType cond, StrType error, const char* cond_string, const char* file, int line) noexcept
     requires EvaluatableBoolean<BoolType>
 {
     UNLIKELY if (!cond)
@@ -88,17 +88,18 @@ constexpr inline void quix_assert(BoolType cond, StrType error, const char* cond
 #define quix_assert(cond, msg) quix::quix_assert(cond, msg, #cond, __FILE__, __LINE__)
 
 template <typename StrType>
-constexpr inline void quix_error(StrType error, const char* file, int line) noexcept(true)
+constexpr inline void quix_error(StrType error, const char* file, int line) noexcept
 {
     fmt::print("Error [{}:{}] {}", file, line, error);
-    exit(EXIT_FAILURE);
+    // exit(EXIT_FAILURE);
+    abort();
 }
 
 #define quix_error(error) quix::quix_error(error, __FILE__, __LINE__)
 
+// a non-owning pointer
 template <typename Type>
 struct weakref {
-    // a weak reference that does not own the pointer
     constexpr explicit weakref(Type* ptr)
         : ptr(ptr)
     {

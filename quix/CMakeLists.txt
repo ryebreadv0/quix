@@ -21,7 +21,7 @@ add_library(${PROJECT_NAME}
     quix_pipeline.cpp
     quix_descriptor.cpp
     quix_render_target.cpp
-    quix_command_list.cpp
+    quix_commands.cpp
     quix_resource.cpp
 )
 

@@ -60,7 +60,7 @@ private:
 
     NODISCARD weakref<device> get_device() const noexcept;
 
-    static constexpr std::size_t m_buffer_size = 1000;
+    static constexpr std::size_t m_buffer_size = 2048;
     std::array<char, m_buffer_size> m_buffer{};
     std::pmr::monotonic_buffer_resource m_allocator{m_buffer.data(), m_buffer_size};
 

@@ -3,7 +3,7 @@
 
 #include "quix_instance.hpp"
 
-#include "quix_command_list.hpp"
+#include "quix_commands.hpp"
 #include "quix_common.hpp"
 #include "quix_descriptor.hpp"
 #include "quix_device.hpp"
@@ -63,7 +63,7 @@ void instance::create_swapchain(const int32_t frames_in_flight, const VkPresentM
 
 void instance::create_pipeline_manager()
 {
-    // TODO : make pipeline manager threadsafe (probably)
+    // TODO : make pipeline manager threadsafe (probably?)
     m_pipeline_manager = allocate_unique<graphics::pipeline_manager>(&m_allocator, make_weakref<device>(m_device));
 }
 

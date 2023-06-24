@@ -1,11 +1,11 @@
-#include "quix_command_list.hpp"
+#include "quix_commands.hpp"
 #include "quix_common.hpp"
 #include "quix_descriptor.hpp"
 #include "quix_instance.hpp"
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"
-#include "quix_window.hpp"
 #include "quix_resource.hpp"
+#include "quix_window.hpp"
 
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
@@ -68,12 +68,21 @@ int main()
         Vertex { vec3 { 0.5f, 0.5f, 0.0f }, vec3 { 0.0f, 1.0f, 0.0f } },
         Vertex { vec3 { -0.5f, 0.5f, 0.0f }, vec3 { 0.0f, 0.0f, 1.0f } });
 
+    auto indices = quix::create_auto_array<uint16_t>(
+        0, 1, 2);
+
     auto vertex_buffer = instance.create_buffer_handle();
     vertex_buffer.create_staged_buffer(sizeof(Vertex) * vertices.size(),
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         vertices.data(),
         &instance);
-    
+
+    auto index_buffer = instance.create_buffer_handle();
+    index_buffer.create_staged_buffer(sizeof(uint16_t) * indices.size(),
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        indices.data(),
+        &instance);
+
     quix::renderpass_info<1, 1, 1> renderpass_info {};
     renderpass_info.attachments[0].format = instance.get_surface_format().format;
     renderpass_info.attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -162,7 +171,9 @@ int main()
 
         vkCmdBindVertexBuffers(command_lists[current_frame]->get_cmd_buffer(), 0, vertex_buffer_array.size(), vertex_buffer_array.data(), offsets.data());
 
-        vkCmdDraw(command_lists[current_frame]->get_cmd_buffer(), vertices.size(), 1, 0, 0);
+        vkCmdBindIndexBuffer(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_buffer(), 0, VK_INDEX_TYPE_UINT16);
+
+        vkCmdDrawIndexed(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_alloc_info().size/sizeof(uint16_t), 1, 0, 0, 0);
 
         command_lists[current_frame]->end_render_pass();
 
@@ -174,8 +185,7 @@ int main()
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->get_framebuffer_resized()) {
             render_target.recreate_swapchain();
-        }
-        else if (result != VK_SUCCESS) {
+        } else if (result != VK_SUCCESS) {
             quix_error("failed to present swapchain image");
         }
         current_frame = (current_frame + 1) % FRAMES_IN_FLIGHT;
