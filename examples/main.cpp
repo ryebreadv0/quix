@@ -7,23 +7,18 @@
 #include "quix_resource.hpp"
 #include "quix_window.hpp"
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 static constexpr int WIDTH = 800;
 static constexpr int HEIGHT = 600;
 static constexpr int FRAMES_IN_FLIGHT = 2;
 
-struct vec3 {
-    union {
-        struct {
-            float x, y, z;
-        };
-        float data[3];
-    };
-    NODISCARD constexpr inline float operator[](int index) const noexcept { return data[index]; }
-};
-
 struct Vertex {
-    vec3 pos;
-    vec3 color;
+    glm::vec3 pos;
+    glm::vec3 color;
 
     static constexpr std::array<VkVertexInputBindingDescription, 1> get_binding_description()
     {
@@ -52,6 +47,23 @@ struct Vertex {
     }
 };
 
+struct uniform_buffer_object {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+    uniform_buffer_object()
+        : model(glm::mat4(1.0f))
+        , view(glm::mat4(1.0f))
+        , proj(glm::mat4(1.0f))
+    {
+    }
+
+    void update()
+    {
+        model = glm::rotate(model, glm::radians(0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
+    }
+};
+
 int main()
 {
     quix::instance instance("quix_example",
@@ -64,9 +76,9 @@ int main()
     instance.create_swapchain(FRAMES_IN_FLIGHT, VK_PRESENT_MODE_FIFO_KHR);
 
     auto vertices = quix::create_auto_array<Vertex>(
-        Vertex { vec3 { 0.0f, -0.5f, 0.0f }, vec3 { 1.0f, 1.0f, 1.0f } },
-        Vertex { vec3 { 0.5f, 0.5f, 0.0f }, vec3 { 0.0f, 1.0f, 0.0f } },
-        Vertex { vec3 { -0.5f, 0.5f, 0.0f }, vec3 { 0.0f, 0.0f, 1.0f } });
+        Vertex { glm::vec3 { 0.0f, -0.5f, 0.0f }, glm::vec3 { 1.0f, 1.0f, 1.0f } },
+        Vertex { glm::vec3 { 0.5f, 0.5f, 0.0f }, glm::vec3 { 0.0f, 1.0f, 0.0f } },
+        Vertex { glm::vec3 { -0.5f, 0.5f, 0.0f }, glm::vec3 { 0.0f, 0.0f, 1.0f } });
 
     auto indices = quix::create_auto_array<uint16_t>(
         0, 1, 2);
@@ -82,6 +94,14 @@ int main()
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         indices.data(),
         &instance);
+
+    auto uniform_buffers = std::array<quix::buffer_handle, FRAMES_IN_FLIGHT> {
+        instance.create_buffer_handle(), instance.create_buffer_handle()
+    };
+    for (auto& uniform_buffer : uniform_buffers) {
+        uniform_buffer.create_uniform_buffer(sizeof(uniform_buffer_object));
+        *((uniform_buffer_object*)uniform_buffer.get_mapped_data()) = uniform_buffer_object {};
+    }
 
     quix::renderpass_info<1, 1, 1> renderpass_info {};
     renderpass_info.attachments[0].format = instance.get_surface_format().format;
@@ -126,6 +146,13 @@ int main()
     auto descriptor_set_layout = descriptor_set_builder
                                      .bind_buffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
                                      .buildLayout();
+
+    std::array<VkDescriptorSet, FRAMES_IN_FLIGHT> descriptor_sets {};
+    for (uint32_t index = 0; index < FRAMES_IN_FLIGHT; index++) {
+        auto buffer_info = uniform_buffers[index].get_descriptor_info();
+        descriptor_set_builder.update_buffer(0, &buffer_info);
+        descriptor_sets[index] = descriptor_set_builder.buildSet();
+    }
 
     auto pipeline = pipeline_builder.add_shader_stages(shader_stages)
                         .create_vertex_state(vertex_binding_description.data(), vertex_binding_description.size(), vertex_attribute_description.data(), vertex_attribute_description.size())
@@ -173,11 +200,15 @@ int main()
 
         vkCmdBindIndexBuffer(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_buffer(), 0, VK_INDEX_TYPE_UINT16);
 
-        vkCmdDrawIndexed(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_alloc_info().size/sizeof(uint16_t), 1, 0, 0, 0);
+        vkCmdBindDescriptorSets(command_lists[current_frame]->get_cmd_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->get_layout(), 0, 1, &descriptor_sets[current_frame], 0, nullptr);
+
+        vkCmdDrawIndexed(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_alloc_info().size / sizeof(uint16_t), 1, 0, 0, 0);
 
         command_lists[current_frame]->end_render_pass();
 
         command_lists[current_frame]->end_record();
+
+        ((uniform_buffer_object*)uniform_buffers[current_frame].get_mapped_data())->update();
 
         VK_CHECK(sync_objects.submit_frame(current_frame, command_lists[current_frame].get()), "failed to submit frame");
 

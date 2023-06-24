@@ -31,6 +31,14 @@ public:
         return m_alloc_info.pMappedData;
     }
     NODISCARD inline VkDeviceSize get_offset() const noexcept { return m_alloc_info.offset; }
+    NODISCARD inline VkDescriptorBufferInfo get_descriptor_info(uint32_t offset = 0)
+    {
+        VkDescriptorBufferInfo info{};
+        info.buffer = m_buffer;
+        info.offset = offset;
+        info.range = m_alloc_info.size;
+        return info;
+    }
 
 private:
 

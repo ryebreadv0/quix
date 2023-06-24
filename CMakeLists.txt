@@ -37,19 +37,22 @@ add_subdirectory(quix)
 set(BUILD_QUIX_EXAMPLE ON CACHE BOOL "Build quix example")
 
 if (BUILD_QUIX_EXAMPLE)
+    CPMAddPackage("gh:g-truc/glm#0.9.9.8")
+
     project(quix_example)
 
-    add_executable(quix_example 
+    add_executable(quix_example
         examples/main.cpp
     )
 
-    target_link_libraries(quix_example 
+    target_link_libraries(quix_example
         quix
     )
 
     target_include_directories(quix_example 
         PUBLIC ${PROJECT_SOURCE_DIR}/quix
         PUBLIC ${PROJECT_SOURCE_DIR}/include
+        PUBLIC ${glm_SOURCE_DIR}
     )
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
