@@ -98,7 +98,6 @@ int main()
     auto uniform_buffers = std::array<quix::buffer_handle, FRAMES_IN_FLIGHT> {
         instance.create_buffer_handle(), instance.create_buffer_handle()
     };
-    
     for (auto& uniform_buffer : uniform_buffers) {
         uniform_buffer.create_uniform_buffer(sizeof(uniform_buffer_object));
         *((uniform_buffer_object*)uniform_buffer.get_mapped_data()) = uniform_buffer_object {};
