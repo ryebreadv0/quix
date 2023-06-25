@@ -4,11 +4,11 @@
 #include "quix_commands.hpp"
 
 #include <utility>
-#include <vulkan/vulkan_core.h>
 
 #include "quix_device.hpp"
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"
+#include "quix_resource.hpp"
 #include "quix_swapchain.hpp"
 
 namespace quix {
@@ -179,24 +179,90 @@ void command_list::end_render_pass()
 
 void command_list::copy_buffer_to_buffer(VkBuffer src_buffer, VkDeviceSize src_offset, VkBuffer dst_buffer, VkDeviceSize dst_offset, VkDeviceSize size)
 {
-    VkBufferCopy copyRegion {};
-    copyRegion.srcOffset = src_offset;
-    copyRegion.dstOffset = dst_offset;
-    copyRegion.size = size;
+    VkBufferCopy copy_region {};
+    copy_region.srcOffset = src_offset;
+    copy_region.dstOffset = dst_offset;
+    copy_region.size = size;
 
-    vkCmdCopyBuffer(buffer, src_buffer, dst_buffer, 1, &copyRegion);
+    vkCmdCopyBuffer(buffer, src_buffer, dst_buffer, 1, &copy_region);
 }
 
-void command_list::submit()
+void command_list::copy_buffer_to_image(VkBuffer src_buffer, VkDeviceSize buffer_offset, image_handle* dst_image, VkOffset3D image_offset, VkImageAspectFlags aspect_mask)
 {
-    VkSubmitInfo submitInfo{};
+    VkBufferImageCopy copy_region {};
+    copy_region.bufferOffset = buffer_offset;
+    copy_region.bufferRowLength = 0;
+    copy_region.bufferImageHeight = 0;
+    copy_region.imageOffset = image_offset;
+    copy_region.imageExtent = dst_image->m_extent;
+
+    copy_region.imageSubresource.aspectMask = aspect_mask;
+    copy_region.imageSubresource.baseArrayLayer = 0;
+    copy_region.imageSubresource.layerCount = dst_image->m_array_layers;
+    copy_region.imageSubresource.mipLevel = dst_image->m_mip_levels;
+
+    vkCmdCopyBufferToImage(
+        buffer, src_buffer,
+        dst_image->get_image(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1, &copy_region);
+}
+
+void command_list::copy_image_to_image(image_handle* src, VkOffset3D src_offset, image_handle* dst, VkOffset3D dst_offset, VkImageAspectFlags aspect_mask)
+{
+    VkImageCopy copy_region {};
+    copy_region.srcOffset = src_offset;
+    copy_region.srcSubresource.layerCount = src->m_array_layers;
+    copy_region.srcSubresource.baseArrayLayer = 0;
+    copy_region.srcSubresource.mipLevel = src->m_mip_levels;
+    copy_region.srcSubresource.aspectMask = aspect_mask;
+
+    copy_region.dstOffset = dst_offset;
+    copy_region.dstSubresource.layerCount = dst->m_array_layers;
+    copy_region.dstSubresource.baseArrayLayer = 0;
+    copy_region.dstSubresource.mipLevel = dst->m_mip_levels;
+    copy_region.dstSubresource.aspectMask = aspect_mask;
+    copy_region.extent = src->m_extent;
+
+    vkCmdCopyImage(buffer, src->get_image(),
+        VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst->get_image(),
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+}
+
+void command_list::image_barrier(image_handle* image, image_barrier_info* barrier_info, VkImageAspectFlags aspect_mask)
+{
+    VkImageMemoryBarrier memory_barrier_info {};
+    memory_barrier_info.image = image->get_image();
+    memory_barrier_info.oldLayout = barrier_info->old_layout;
+    memory_barrier_info.newLayout = barrier_info->new_layout;
+    memory_barrier_info.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    memory_barrier_info.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+    memory_barrier_info.subresourceRange.aspectMask = aspect_mask;
+    memory_barrier_info.subresourceRange.baseMipLevel = 0;
+    memory_barrier_info.subresourceRange.levelCount = image->m_mip_levels;
+    memory_barrier_info.subresourceRange.baseArrayLayer = 0;
+    memory_barrier_info.subresourceRange.layerCount = image->m_array_layers;
+
+    memory_barrier_info.srcAccessMask = barrier_info->src_access_mask;
+    memory_barrier_info.dstAccessMask = barrier_info->dst_access_mask;
+
+    vkCmdPipelineBarrier(
+        buffer,
+        barrier_info->src_stage, barrier_info->dst_stage,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &memory_barrier_info);
+}
+
+void command_list::submit(VkFence fence)
+{
+    VkSubmitInfo submitInfo {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &buffer;
 
-    VK_CHECK(vkQueueSubmit(m_device->get_graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE), "failed to submit command buffer");
-
-    vkQueueWaitIdle(m_device->get_graphics_queue());
+    VK_CHECK(vkQueueSubmit(m_device->get_graphics_queue(), 1, &submitInfo, fence), "failed to submit command buffer");
 }
 
 command_pool::command_pool(weakref<device> p_device, VkCommandPool pool)

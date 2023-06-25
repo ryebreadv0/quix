@@ -11,6 +11,7 @@ namespace graphics {
     class pipeline;
 }
 class command_list;
+class image_handle;
 
 class sync {
 public:
@@ -42,6 +43,15 @@ private:
     VkSemaphore* m_finished_semaphores = nullptr;
 };
 
+struct image_barrier_info {
+    VkImageLayout old_layout{};
+    VkImageLayout new_layout{};
+    VkAccessFlags src_access_mask{};
+    VkAccessFlags dst_access_mask{};
+    VkPipelineStageFlags src_stage{};
+    VkPipelineStageFlags dst_stage{};
+};
+
 class command_list {
 public:
     command_list(weakref<device> p_device, VkCommandBuffer buffer);
@@ -62,8 +72,14 @@ public:
     void end_render_pass();
 
     void copy_buffer_to_buffer(VkBuffer src_buffer, VkDeviceSize src_offset, VkBuffer dst_buffer, VkDeviceSize dst_offset, VkDeviceSize size);
+    // if the image is something like a depth image and or a stencil image, will need VK_IMAGE_ASPECT_DEPTH_BIT and or VK_IMAGE_ASPECT_STENCIL_BIT
+    void copy_buffer_to_image(VkBuffer src_buffer, VkDeviceSize buffer_offset, image_handle* dst_image, VkOffset3D image_offset, VkImageAspectFlags aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT);
+    // if the image is something like a depth image and or a stencil image, will need VK_IMAGE_ASPECT_DEPTH_BIT and or VK_IMAGE_ASPECT_STENCIL_BIT
+    void copy_image_to_image(image_handle* src, VkOffset3D src_offset, image_handle* dst, VkOffset3D dst_offset, VkImageAspectFlags aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT);
 
-    void submit();
+    void image_barrier(image_handle* image, image_barrier_info* barrier_info, VkImageAspectFlags aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT);
+
+    void submit(VkFence fence = VK_NULL_HANDLE);
 
 private:
     weakref<device> m_device;

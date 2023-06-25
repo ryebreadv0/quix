@@ -5,6 +5,7 @@ namespace quix {
 
 class device;
 class instance;
+class command_list;
 
 class buffer_handle {
 public:
@@ -49,6 +50,7 @@ private:
 };
 
 class image_handle {
+friend class command_list;
 public:
     explicit image_handle(weakref<device> p_device);
 
@@ -60,8 +62,12 @@ public:
 
     void create_image(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
 
+    void create_image_from_file(const char* filepath, instance* inst);
+
     void create_view(const VkImageViewCreateInfo* create_info);
     void create_sampler(const VkSamplerCreateInfo* create_info);
+
+    NODISCARD inline VkImage get_image() const noexcept { return m_image; }
 
 private:
     weakref<device> m_device;
@@ -70,6 +76,12 @@ private:
     VkImage m_image = VK_NULL_HANDLE;
     VkImageView m_view = VK_NULL_HANDLE;
     VkSampler m_sampler = VK_NULL_HANDLE;
+
+    uint32_t m_mip_levels{};
+    uint32_t m_array_layers{};
+    VkSampleCountFlagBits m_samples{};
+    VkExtent3D m_extent{};
+
 };
 
 } // namespace quix

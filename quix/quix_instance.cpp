@@ -12,6 +12,7 @@
 #include "quix_swapchain.hpp"
 #include "quix_window.hpp"
 #include "quix_resource.hpp"
+#include <vulkan/vulkan_core.h>
 
 namespace quix {
 
@@ -132,6 +133,19 @@ NODISCARD descriptor::allocator_pool instance::get_descriptor_allocator_pool() c
 NODISCARD descriptor::builder instance::get_descriptor_builder(descriptor::allocator_pool* allocator_pool) const noexcept
 {
     return descriptor::builder { m_descriptor_layout_cache.get(), allocator_pool };
+}
+
+NODISCARD VkFence instance::create_fence(VkFenceCreateFlags flags)
+{
+    VkFence fence = VK_NULL_HANDLE;
+
+    VkFenceCreateInfo fence_info {};
+    fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fence_info.flags = flags;
+
+    VK_CHECK(vkCreateFence(m_device->get_logical_device(),&fence_info, nullptr, &fence), "failed to create fence");
+
+    return fence;
 }
 
 NODISCARD weakref<device> instance::get_device() const noexcept

@@ -54,6 +54,7 @@ public:
     NODISCARD descriptor::allocator_pool get_descriptor_allocator_pool() const noexcept;
     NODISCARD descriptor::builder get_descriptor_builder(descriptor::allocator_pool* allocator_pool) const noexcept;
 
+    NODISCARD VkFence create_fence(VkFenceCreateFlags flags = 0);
 
 private:
     friend class swapchain;

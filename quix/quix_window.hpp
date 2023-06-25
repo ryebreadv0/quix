@@ -1,3 +1,5 @@
+#include <utility>
+
 #ifndef _QUIX_WINDOW_HPP
 #define _QUIX_WINDOW_HPP
 
@@ -17,15 +19,15 @@ public:
     window(window&&) = delete;
     window& operator=(window&&) = delete;
 
-    NODISCARD inline bool should_close() const { return glfwWindowShouldClose(m_window); }
-    inline void poll_events() const { glfwPollEvents(); }
-    inline void wait_events() const { glfwWaitEvents(); }
+    NODISCARD inline bool should_close() const { return glfwWindowShouldClose(m_window) != 0; }
+    static inline void poll_events()  { glfwPollEvents(); }
+    static inline void wait_events()  { glfwWaitEvents(); }
 
     NODISCARD inline GLFWwindow* get_window() const noexcept { return m_window; }
-    
+
     NODISCARD inline bool get_framebuffer_resized() noexcept
     {
-        if (framebuffer_resized == true) {
+        if (framebuffer_resized) {
             framebuffer_resized = false;
             return true;
         } else {
@@ -33,27 +35,30 @@ public:
         }
     }
 
-    // if I ever care about speed I am just going to write my own windowing library, 
+    // if I ever care about speed I am just going to write my own windowing library,
     // the default interface is terrible and I refuse to not use it this way.
     inline void set_key_callback(std::function<void(GLFWwindow*, int, int, int, int)> callback) noexcept
     {
-        if (key_callback == nullptr)
+        if (key_callback == nullptr) {
             enable_key_callback();
-        key_callback = callback;
+        }
+        key_callback = std::move(callback);
     }
-    
+
     inline void set_cursor_callback(std::function<void(GLFWwindow*, double, double)> callback) noexcept
     {
-        if (cursor_callback == nullptr)
+        if (cursor_callback == nullptr) {
             enable_cursor_callback();
-        cursor_callback = callback;
+        }
+        cursor_callback = std::move(callback);
     }
 
     inline void set_mouse_button_callback(std::function<void(GLFWwindow*, int, int, int)> callback) noexcept
     {
-        if (mouse_button_callback == nullptr)
+        if (mouse_button_callback == nullptr) {
             enable_mouse_button_callback();
-        mouse_button_callback = callback;
+        }
+        mouse_button_callback = std::move(callback);
     }
 
 private:
