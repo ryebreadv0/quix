@@ -65,7 +65,8 @@ public:
     void create_image_from_file(const char* filepath, instance* inst);
 
     void create_view();
-    void create_sampler(const VkSamplerCreateInfo* create_info);
+    void createSampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode);
+    void createSampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode, float anisotropy);
 
     NODISCARD inline VkImage get_image() const noexcept { return m_image; }
 

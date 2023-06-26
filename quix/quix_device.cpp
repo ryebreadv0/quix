@@ -424,10 +424,12 @@ void device::pick_physical_device()
 
             m_physical_device = deviceRating.second;
             m_queue_family_indices = find_queue_families(m_physical_device);
+            VkPhysicalDeviceProperties properties;
+            vkGetPhysicalDeviceProperties(m_physical_device, &properties);
+            max_sampler_anisotropy = properties.limits.maxSamplerAnisotropy;
+            spdlog::info("Using device: {} with a score of {}", properties.deviceName, deviceRating.first);
 
-            spdlog::info("Using device with score of {}", deviceRating.first);
-
-            // maxMsaa = getMaxUsableSampleCount();
+            // maxMsaa = getMaxUsableSampleCount(); // TODO
             break;
         }
     }

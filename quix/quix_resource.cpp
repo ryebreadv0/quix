@@ -241,9 +241,90 @@ void image_handle::create_view()
     VK_CHECK(vkCreateImageView(m_device->get_logical_device(), &create_info, nullptr, &m_view), "failed to create image view");
 }
 
-void image_handle::create_sampler(const VkSamplerCreateInfo* create_info)
+/*m_filter - VK_FILTER_NEAREST/VK_FILTER_LINEAR
+ *sampler_address_mode - VK_SAMPLER_ADDRESS_MODE_REPEAT/VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT/VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE/VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE/VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
+*/
+void image_handle::createSampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode)
 {
-    VK_CHECK(vkCreateSampler(m_device->get_logical_device(), create_info, nullptr, &m_sampler), "failed to create sampler");
+    VkSamplerCreateInfo sampler_info{};
+    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_info.magFilter = m_filter;
+    sampler_info.minFilter = m_filter; 
+
+    // VK_SAMPLER_ADDRESS_MODE_REPEAT: Repeat the texture when going beyond the image dimensions.
+    // VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT: Like repeat, but inverts the coordinates to mirror the image when going beyond the dimensions.
+    // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE: Take the color of the edge closest to the coordinate beyond the image dimensions.
+    // VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE: Like clamp to edge, but instead uses the edge opposite to the closest edge.
+    // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER: Return a solid color when sampling beyond the dimensions of the image.
+    sampler_info.addressModeU = sampler_address_mode;
+    sampler_info.addressModeV = sampler_address_mode;
+    sampler_info.addressModeW = sampler_address_mode;
+
+    sampler_info.anisotropyEnable = VK_FALSE;
+
+    // beyond image clamp
+    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+
+    // field specifies which coordinate system you want to use to address texels in an image
+    // VK_FALSE = 0,1
+    // VK_TRUE = 0,texWidth 0,texHeight
+    sampler_info.unnormalizedCoordinates = VK_FALSE;
+
+    sampler_info.compareEnable = VK_FALSE;
+    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+
+    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_info.mipLodBias = 0.0f;
+    sampler_info.minLod = 0.0f;
+    sampler_info.maxLod = VK_LOD_CLAMP_NONE; //IDK MAN I THINK THIS IS RIGHT
+
+    VK_CHECK(vkCreateSampler(m_device->get_logical_device(), &sampler_info, nullptr, &m_sampler), "failed to create sampler");
+}
+
+void image_handle::createSampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode, float anisotropy)
+{
+    VkSamplerCreateInfo sampler_info{};
+    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_info.magFilter = m_filter;
+    sampler_info.minFilter = m_filter; 
+
+    // VK_SAMPLER_ADDRESS_MODE_REPEAT: Repeat the texture when going beyond the image dimensions.
+    // VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT: Like repeat, but inverts the coordinates to mirror the image when going beyond the dimensions.
+    // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE: Take the color of the edge closest to the coordinate beyond the image dimensions.
+    // VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE: Like clamp to edge, but instead uses the edge opposite to the closest edge.
+    // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER: Return a solid color when sampling beyond the dimensions of the image.
+    sampler_info.addressModeU = sampler_address_mode;
+    sampler_info.addressModeV = sampler_address_mode;
+    sampler_info.addressModeW = sampler_address_mode;
+
+    sampler_info.anisotropyEnable = VK_TRUE;
+    float max_anisotrophy = m_device->get_max_sampler_anisotropy();
+
+    if (anisotropy > max_anisotrophy) {
+        anisotropy = max_anisotrophy;
+    }
+    if (anisotropy == 0.0f) {
+        anisotropy = max_anisotrophy;
+    }
+    sampler_info.maxAnisotropy = anisotropy;
+
+    // beyond image clamp
+    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+
+    // field specifies which coordinate system you want to use to address texels in an image
+    // VK_FALSE = 0,1
+    // VK_TRUE = 0,texWidth 0,texHeight
+    sampler_info.unnormalizedCoordinates = VK_FALSE;
+
+    sampler_info.compareEnable = VK_FALSE;
+    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+
+    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_info.mipLodBias = 0.0f;
+    sampler_info.minLod = 0.0f;
+    sampler_info.maxLod = VK_LOD_CLAMP_NONE; //IDK MAN I THINK THIS IS RIGHT
+
+    VK_CHECK(vkCreateSampler(m_device->get_logical_device(), &sampler_info, nullptr, &m_sampler), "failed to create sampler");
 }
 
 constexpr VkImageViewType image_handle::type_to_view_type()

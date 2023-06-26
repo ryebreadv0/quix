@@ -48,6 +48,7 @@ public:
     NODISCARD inline queue_family_indices get_queue_family_indices() const noexcept { return m_queue_family_indices.value(); }
     NODISCARD inline VkQueue get_graphics_queue() const noexcept { return m_graphics_queue; }
     NODISCARD inline VkQueue get_present_queue() const noexcept { return m_present_queue; }
+    NODISCARD inline float get_max_sampler_anisotropy() const noexcept { return max_sampler_anisotropy; }
 
     NODISCARD VkCommandPool get_command_pool();
     void return_command_pool(VkCommandPool command_pool);
@@ -98,6 +99,7 @@ private:
     VkPhysicalDeviceFeatures requested_features {};
 
     std::optional<queue_family_indices> m_queue_family_indices;
+    float max_sampler_anisotropy{};
 
     std::deque<VkCommandPool> m_command_pools;
     std::mutex m_command_pool_mutex;
