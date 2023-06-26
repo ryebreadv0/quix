@@ -64,12 +64,15 @@ public:
 
     void create_image_from_file(const char* filepath, instance* inst);
 
-    void create_view(const VkImageViewCreateInfo* create_info);
+    void create_view();
     void create_sampler(const VkSamplerCreateInfo* create_info);
 
     NODISCARD inline VkImage get_image() const noexcept { return m_image; }
 
 private:
+
+    constexpr VkImageViewType type_to_view_type();
+
     weakref<device> m_device;
     VmaAllocation m_alloc {};
     VmaAllocationInfo m_alloc_info {};
@@ -77,6 +80,8 @@ private:
     VkImageView m_view = VK_NULL_HANDLE;
     VkSampler m_sampler = VK_NULL_HANDLE;
 
+    VkImageType m_type{};
+    VkFormat m_format{};
     uint32_t m_mip_levels{};
     uint32_t m_array_layers{};
     VkSampleCountFlagBits m_samples{};

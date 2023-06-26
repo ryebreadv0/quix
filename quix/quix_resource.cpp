@@ -143,6 +143,8 @@ image_handle::~image_handle()
 
 void image_handle::create_image(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info)
 {
+    m_type = create_info->imageType;
+    m_format = create_info->format;
     m_mip_levels = create_info->mipLevels;
     m_array_layers = create_info->arrayLayers;
     m_samples = create_info->samples;
@@ -220,14 +222,43 @@ void image_handle::create_image_from_file(const char* filepath, instance* inst)
 
 }
 
-void image_handle::create_view(const VkImageViewCreateInfo* create_info)
+void image_handle::create_view()
 {
-    VK_CHECK(vkCreateImageView(m_device->get_logical_device(), create_info, nullptr, &m_view), "failed to create image view");
+    VkImageViewCreateInfo create_info{};
+    create_info.image = m_image;
+    create_info.viewType = type_to_view_type();
+    create_info.format = m_format;
+    create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT; // TODO might need support for other aspect masks later on? though depth buffer views are created automatically so maybe not
+    create_info.subresourceRange.baseMipLevel = 0;
+    create_info.subresourceRange.levelCount = m_mip_levels;
+    create_info.subresourceRange.baseArrayLayer = 0;
+    create_info.subresourceRange.layerCount = m_array_layers;
+    create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+    VK_CHECK(vkCreateImageView(m_device->get_logical_device(), &create_info, nullptr, &m_view), "failed to create image view");
 }
 
 void image_handle::create_sampler(const VkSamplerCreateInfo* create_info)
 {
     VK_CHECK(vkCreateSampler(m_device->get_logical_device(), create_info, nullptr, &m_sampler), "failed to create sampler");
+}
+
+constexpr VkImageViewType image_handle::type_to_view_type()
+{
+    switch (m_type) {
+        case VK_IMAGE_TYPE_1D:
+            return VK_IMAGE_VIEW_TYPE_1D;
+        case VK_IMAGE_TYPE_2D:
+            return VK_IMAGE_VIEW_TYPE_2D;
+        case VK_IMAGE_TYPE_3D:
+            return VK_IMAGE_VIEW_TYPE_3D;
+        default:
+            spdlog::warn("Unsupported type used for image");
+            return VK_IMAGE_VIEW_TYPE_1D;
+    }
 }
 
 } // namespace quix
