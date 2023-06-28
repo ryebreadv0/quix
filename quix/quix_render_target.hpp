@@ -32,7 +32,6 @@ struct renderpass_info {
 class render_target {
 public:
     render_target(weakref<window> p_window, weakref<device> p_device, weakref<swapchain> p_swapchain, const VkRenderPassCreateInfo* render_pass_create_info);
-
     ~render_target();
 
     render_target(const render_target&) = delete;

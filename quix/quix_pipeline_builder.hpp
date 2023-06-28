@@ -79,7 +79,7 @@ namespace graphics {
         inline void init_pipeline_defaults()
         {
             create_vertex_state(nullptr, 0, nullptr, 0);
-            create_input_assembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
+            create_input_assembly(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
             create_viewport_state(nullptr, 1, nullptr, 1);
             create_rasterization_state(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
             create_multisample_state(VK_SAMPLE_COUNT_1_BIT);

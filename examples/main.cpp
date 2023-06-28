@@ -7,8 +7,8 @@
 #include "quix_resource.hpp"
 #include "quix_window.hpp"
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+// #define GLM_FORCE_RADIANS
+// #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -44,6 +44,7 @@ struct Vertex {
                 .binding = 0,
                 .format = VK_FORMAT_R32G32B32_SFLOAT,
                 .offset = offsetof(Vertex, color) },
+
             VkVertexInputAttributeDescription {
                 .location = 2,
                 .binding = 0,
@@ -66,7 +67,7 @@ struct uniform_buffer_object {
 
     void update()
     {
-        // model = glm::rotate(model, glm::radians(0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::rotate(model, glm::radians(0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
     }
 };
 
@@ -77,25 +78,24 @@ int main()
         WIDTH, HEIGHT);
 
     instance.create_device({ VK_KHR_SWAPCHAIN_EXTENSION_NAME },
-        { .samplerAnisotropy = VK_TRUE });
-
+        { });
     instance.create_swapchain(FRAMES_IN_FLIGHT, VK_PRESENT_MODE_FIFO_KHR);
 
-    auto vertices = std::array<Vertex, 4>({
-        Vertex { { 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.f, 0.f } },
-        Vertex { { 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.f, 0.f } },
-        Vertex { { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.f, 1.f } },
-        Vertex { { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 0.f, 1.f } }
-        // Vertex { { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 1.f, 0.f } }
-    });
+    auto vertices = quix::create_auto_array<Vertex>(
+        Vertex{glm::vec3{-0.5f, -0.5f, 0.0f}, glm::vec3{1.0f, 0.0f, 0.0f}, glm::vec2{0.0f, 0.0f}},
+        Vertex{glm::vec3{0.5f, -0.5f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec2{1.0f, 0.0f}},
+        Vertex{glm::vec3{0.5f, 0.5f, 0.0f}, glm::vec3{0.0f, 0.0f, 1.0f}, glm::vec2{1.0f, 1.0f}},
+        Vertex{glm::vec3{-0.5f, 0.5f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, glm::vec2{0.0f, 1.0f}}
+    );
 
-    auto indices = quix::create_auto_array<uint16_t>(0, 1, 2, 3, 3, 2, 1);
+    auto indices = quix::create_auto_array<uint16_t>(
+        0, 1, 2, 2, 3, 0);
 
     auto vertex_buffer = instance.create_buffer_handle();
-    vertex_buffer.create_cpu_buffer(sizeof(Vertex) * vertices.size(),
+    vertex_buffer.create_staged_buffer(sizeof(Vertex) * vertices.size(),
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
-    memcpy(vertex_buffer.get_mapped_data(), vertices.data(), sizeof(Vertex) * vertices.size());
+        vertices.data(),
+        &instance);
 
     auto index_buffer = instance.create_buffer_handle();
     index_buffer.create_staged_buffer(sizeof(uint16_t) * indices.size(),
@@ -174,7 +174,8 @@ int main()
 
     auto pipeline = pipeline_builder.add_shader_stages(shader_stages)
                         .create_vertex_state(vertex_binding_description.data(), vertex_binding_description.size(), vertex_attribute_description.data(), vertex_attribute_description.size())
-                        .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
+                        .create_rasterization_state(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE)
+                        // .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
                         .add_descriptor_set_layout(descriptor_set_layout)
                         .create_graphics_pipeline();
 
@@ -192,7 +193,7 @@ int main()
     };
 
     std::array<VkClearValue, 1> clear_values = {
-        { { 0.0f, 0.0f, 0.0f, 0.0f } }
+        { { 0.0f, 0.0f, 0.0f, 1.0f } }
     };
 
     std::array<VkBuffer, 1> vertex_buffer_array = { vertex_buffer.get_buffer() };
@@ -216,13 +217,13 @@ int main()
 
         vkCmdBindVertexBuffers(command_lists[current_frame]->get_cmd_buffer(), 0, vertex_buffer_array.size(), vertex_buffer_array.data(), offsets.data());
 
-        // vkCmdBindIndexBuffer(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_buffer(), 0, VK_INDEX_TYPE_UINT16);
+        vkCmdBindIndexBuffer(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_buffer(), 0, VK_INDEX_TYPE_UINT16);
 
         vkCmdBindDescriptorSets(command_lists[current_frame]->get_cmd_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->get_layout(), 0, 1, &descriptor_sets[current_frame], 0, nullptr);
 
-        // vkCmdDrawIndexed(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_alloc_info().size / sizeof(uint16_t), 1, 0, 0, 0);
+        vkCmdDrawIndexed(command_lists[current_frame]->get_cmd_buffer(), indices.size(), 1, 0, 0, 0);
 
-        vkCmdDraw(command_lists[current_frame]->get_cmd_buffer(), vertices.size(), 1, 0, 0);
+        // vkCmdDraw(command_lists[current_frame]->get_cmd_buffer(), vertices.size(), 1, 0, 0);
 
         command_lists[current_frame]->end_render_pass();
 
