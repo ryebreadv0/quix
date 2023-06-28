@@ -144,6 +144,7 @@ void command_list::begin_render_pass(const render_target& r_target, const std::s
     render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_begin_info.renderPass = r_target.get_render_pass();
     render_pass_begin_info.framebuffer = r_target.get_framebuffer(image_index);
+
     VkRect2D render_area {};
     render_area.offset = { 0, 0 };
     render_area.extent = r_target.get_extent();
@@ -193,13 +194,14 @@ void command_list::copy_buffer_to_image(VkBuffer src_buffer, VkDeviceSize buffer
     copy_region.bufferOffset = buffer_offset;
     copy_region.bufferRowLength = 0;
     copy_region.bufferImageHeight = 0;
+    
     copy_region.imageOffset = image_offset;
     copy_region.imageExtent = dst_image->m_extent;
 
     copy_region.imageSubresource.aspectMask = aspect_mask;
     copy_region.imageSubresource.baseArrayLayer = 0;
     copy_region.imageSubresource.layerCount = dst_image->m_array_layers;
-    copy_region.imageSubresource.mipLevel = dst_image->m_mip_levels;
+    copy_region.imageSubresource.mipLevel = dst_image->m_mip_levels-1;
 
     vkCmdCopyBufferToImage(
         buffer, src_buffer,
@@ -231,6 +233,7 @@ void command_list::copy_image_to_image(image_handle* src, VkOffset3D src_offset,
 void command_list::image_barrier(image_handle* image, image_barrier_info* barrier_info, VkImageAspectFlags aspect_mask)
 {
     VkImageMemoryBarrier memory_barrier_info {};
+    memory_barrier_info.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     memory_barrier_info.image = image->get_image();
     memory_barrier_info.oldLayout = barrier_info->old_layout;
     memory_barrier_info.newLayout = barrier_info->new_layout;

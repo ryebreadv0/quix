@@ -1,6 +1,7 @@
 #ifndef _QUIX_INSTANCE_HPP
 #define _QUIX_INSTANCE_HPP
 
+#include "quix_resource.hpp"
 namespace quix {
 
 class window;
@@ -41,6 +42,7 @@ public:
     NODISCARD sync create_sync_objects() noexcept;
     
     NODISCARD buffer_handle create_buffer_handle() const noexcept;
+    NODISCARD image_handle create_image_handle() const noexcept;
 
     void wait_idle();
 

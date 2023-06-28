@@ -98,6 +98,13 @@ NODISCARD buffer_handle instance::create_buffer_handle() const noexcept
         };
 }
 
+NODISCARD image_handle instance::create_image_handle() const noexcept
+{
+    return image_handle {
+        make_weakref<device>(m_device),
+        };
+}
+
 void instance::wait_idle()
 {
     m_device->wait_idle();

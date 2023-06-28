@@ -6,8 +6,6 @@
 #include "quix_commands.hpp"
 #include "quix_device.hpp"
 #include "quix_instance.hpp"
-#include <cstdint>
-#include <vulkan/vulkan_core.h>
 
 namespace quix {
 
@@ -45,7 +43,7 @@ void buffer_handle::create_uniform_buffer(const VkDeviceSize size)
     create_buffer(&buffer_info, &alloc_info);
 }
 
-void buffer_handle::create_cpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const VmaAllocationCreateFlagBits alloc_flags)
+void buffer_handle::create_cpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const VmaAllocationCreateFlags alloc_flags)
 {
     VkBufferCreateInfo buffer_info {};
     buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -100,6 +98,7 @@ void buffer_handle::create_staged_buffer(const VkDeviceSize size, const VkBuffer
     cmd_list->end_record();
     VkFence fence = inst->create_fence();
     cmd_list->submit(fence);
+    m_device->wait_idle();
     vkWaitForFences(m_device->get_logical_device(), 1, &fence, VK_TRUE, UINT64_MAX); // hopefully no deadlocking
     vkDestroyFence(m_device->get_logical_device(), fence, nullptr);
 }
@@ -114,7 +113,7 @@ void buffer_handle::create_staging_buffer(const VkDeviceSize size)
 
     VmaAllocationCreateInfo alloc_info {};
     alloc_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
-    alloc_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    alloc_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 
     create_buffer(&buffer_info, &alloc_info);
 }
@@ -152,7 +151,7 @@ void image_handle::create_image(const VkImageCreateInfo* create_info, const VmaA
     VK_CHECK(vmaCreateImage(m_device->get_allocator(), create_info, alloc_info, &m_image, &m_alloc, &m_alloc_info), "failed to create image");
 }
 
-void image_handle::create_image_from_file(const char* filepath, instance* inst)
+image_handle& image_handle::create_image_from_file(const char* filepath, instance* inst)
 {
     int texture_width{};
     int texture_height{};
@@ -220,11 +219,13 @@ void image_handle::create_image_from_file(const char* filepath, instance* inst)
 
     stbi_image_free(pixels);
 
+    return *this;
 }
 
-void image_handle::create_view()
+image_handle& image_handle::create_view()
 {
     VkImageViewCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     create_info.image = m_image;
     create_info.viewType = type_to_view_type();
     create_info.format = m_format;
@@ -239,12 +240,14 @@ void image_handle::create_view()
     create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
     VK_CHECK(vkCreateImageView(m_device->get_logical_device(), &create_info, nullptr, &m_view), "failed to create image view");
+
+    return *this;
 }
 
 /*m_filter - VK_FILTER_NEAREST/VK_FILTER_LINEAR
  *sampler_address_mode - VK_SAMPLER_ADDRESS_MODE_REPEAT/VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT/VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE/VK_SAMPLER_ADDRESS_MODE_MIRROR_CLAMP_TO_EDGE/VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER
 */
-void image_handle::createSampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode)
+image_handle& image_handle::create_sampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode)
 {
     VkSamplerCreateInfo sampler_info{};
     sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -279,9 +282,11 @@ void image_handle::createSampler(VkFilter m_filter, VkSamplerAddressMode sampler
     sampler_info.maxLod = VK_LOD_CLAMP_NONE; //IDK MAN I THINK THIS IS RIGHT
 
     VK_CHECK(vkCreateSampler(m_device->get_logical_device(), &sampler_info, nullptr, &m_sampler), "failed to create sampler");
+
+    return *this;
 }
 
-void image_handle::createSampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode, float anisotropy)
+image_handle& image_handle::create_sampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode, float anisotropy)
 {
     VkSamplerCreateInfo sampler_info{};
     sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -325,6 +330,8 @@ void image_handle::createSampler(VkFilter m_filter, VkSamplerAddressMode sampler
     sampler_info.maxLod = VK_LOD_CLAMP_NONE; //IDK MAN I THINK THIS IS RIGHT
 
     VK_CHECK(vkCreateSampler(m_device->get_logical_device(), &sampler_info, nullptr, &m_sampler), "failed to create sampler");
+
+    return *this;
 }
 
 constexpr VkImageViewType image_handle::type_to_view_type()

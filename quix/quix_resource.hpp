@@ -20,7 +20,7 @@ public:
     void create_buffer(const VkBufferCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
     void create_uniform_buffer(const VkDeviceSize size);
     void create_staging_buffer(const VkDeviceSize size);
-    void create_cpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const VmaAllocationCreateFlagBits alloc_flags);
+    void create_cpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const VmaAllocationCreateFlags alloc_flags);
     void create_gpu_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags);
     void create_staged_buffer(const VkDeviceSize size, const VkBufferUsageFlags usage_flags, const void* data, instance* inst);
 
@@ -62,13 +62,24 @@ public:
 
     void create_image(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
 
-    void create_image_from_file(const char* filepath, instance* inst);
+    image_handle& create_image_from_file(const char* filepath, instance* inst);
 
-    void create_view();
-    void createSampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode);
-    void createSampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode, float anisotropy);
+    image_handle& create_view();
+    image_handle& create_sampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode);
+    image_handle& create_sampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode, float anisotropy);
 
     NODISCARD inline VkImage get_image() const noexcept { return m_image; }
+    NODISCARD inline VkImageView get_view() const noexcept { return m_view; }
+    NODISCARD inline VkSampler get_sampler() const noexcept { return m_sampler; }
+
+    NODISCARD inline VkDescriptorImageInfo get_descriptor_info()
+    {
+        VkDescriptorImageInfo info{};
+        info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        info.imageView = m_view;
+        info.sampler = m_sampler;
+        return info;
+    }
 
 private:
 

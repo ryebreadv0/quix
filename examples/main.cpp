@@ -19,6 +19,7 @@ static constexpr int FRAMES_IN_FLIGHT = 2;
 struct Vertex {
     glm::vec3 pos;
     glm::vec3 color;
+    glm::vec2 tex;
 
     static constexpr std::array<VkVertexInputBindingDescription, 1> get_binding_description()
     {
@@ -30,7 +31,7 @@ struct Vertex {
         };
     }
 
-    static constexpr std::array<VkVertexInputAttributeDescription, 2> get_attribute_description()
+    static constexpr std::array<VkVertexInputAttributeDescription, 3> get_attribute_description()
     {
         return {
             VkVertexInputAttributeDescription {
@@ -42,7 +43,12 @@ struct Vertex {
                 .location = 1,
                 .binding = 0,
                 .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = offsetof(Vertex, color) }
+                .offset = offsetof(Vertex, color) },
+            VkVertexInputAttributeDescription {
+                .location = 2,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32_SFLOAT,
+                .offset = offsetof(Vertex, tex) }
         };
     }
 };
@@ -60,7 +66,7 @@ struct uniform_buffer_object {
 
     void update()
     {
-        model = glm::rotate(model, glm::radians(0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
+        // model = glm::rotate(model, glm::radians(0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
     }
 };
 
@@ -71,29 +77,36 @@ int main()
         WIDTH, HEIGHT);
 
     instance.create_device({ VK_KHR_SWAPCHAIN_EXTENSION_NAME },
-        {});
+        { .samplerAnisotropy = VK_TRUE });
 
     instance.create_swapchain(FRAMES_IN_FLIGHT, VK_PRESENT_MODE_FIFO_KHR);
 
-    auto vertices = quix::create_auto_array<Vertex>(
-        Vertex { glm::vec3 { 0.0f, -0.5f, 0.0f }, glm::vec3 { 1.0f, 1.0f, 1.0f } },
-        Vertex { glm::vec3 { 0.5f, 0.5f, 0.0f }, glm::vec3 { 0.0f, 1.0f, 0.0f } },
-        Vertex { glm::vec3 { -0.5f, 0.5f, 0.0f }, glm::vec3 { 0.0f, 0.0f, 1.0f } });
+    auto vertices = std::array<Vertex, 4>({
+        Vertex { { 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.f, 0.f } },
+        Vertex { { 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, { 0.f, 0.f } },
+        Vertex { { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }, { 1.f, 1.f } },
+        Vertex { { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 0.f, 1.f } }
+        // Vertex { { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 1.f, 0.f } }
+    });
 
-    auto indices = quix::create_auto_array<uint16_t>(
-        0, 1, 2);
+    auto indices = quix::create_auto_array<uint16_t>(0, 1, 2, 3, 3, 2, 1);
 
     auto vertex_buffer = instance.create_buffer_handle();
-    vertex_buffer.create_staged_buffer(sizeof(Vertex) * vertices.size(),
+    vertex_buffer.create_cpu_buffer(sizeof(Vertex) * vertices.size(),
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-        vertices.data(),
-        &instance);
+        VMA_ALLOCATION_CREATE_MAPPED_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
+    memcpy(vertex_buffer.get_mapped_data(), vertices.data(), sizeof(Vertex) * vertices.size());
 
     auto index_buffer = instance.create_buffer_handle();
     index_buffer.create_staged_buffer(sizeof(uint16_t) * indices.size(),
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         indices.data(),
         &instance);
+
+    auto image = instance.create_image_handle();
+    image.create_image_from_file("examples/img.jpg", &instance)
+        .create_view()
+        .create_sampler(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_REPEAT);
 
     auto uniform_buffers = std::array<quix::buffer_handle, FRAMES_IN_FLIGHT> {
         instance.create_buffer_handle(), instance.create_buffer_handle()
@@ -145,13 +158,18 @@ int main()
     auto descriptor_set_builder = instance.get_descriptor_builder(&allocator_pool);
     auto descriptor_set_layout = descriptor_set_builder
                                      .bind_buffer(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+                                     .bind_image(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
                                      .buildLayout();
 
     std::array<VkDescriptorSet, FRAMES_IN_FLIGHT> descriptor_sets {};
-    for (uint32_t index = 0; index < FRAMES_IN_FLIGHT; index++) {
-        auto buffer_info = uniform_buffers[index].get_descriptor_info();
-        descriptor_set_builder.update_buffer(0, &buffer_info);
-        descriptor_sets[index] = descriptor_set_builder.buildSet();
+    {
+        auto image_info = image.get_descriptor_info();
+        descriptor_set_builder.update_image(1, &image_info);
+        for (uint32_t index = 0; index < FRAMES_IN_FLIGHT; index++) {
+            auto buffer_info = uniform_buffers[index].get_descriptor_info();
+            descriptor_set_builder.update_buffer(0, &buffer_info);
+            descriptor_sets[index] = descriptor_set_builder.buildSet();
+        }
     }
 
     auto pipeline = pipeline_builder.add_shader_stages(shader_stages)
@@ -198,11 +216,13 @@ int main()
 
         vkCmdBindVertexBuffers(command_lists[current_frame]->get_cmd_buffer(), 0, vertex_buffer_array.size(), vertex_buffer_array.data(), offsets.data());
 
-        vkCmdBindIndexBuffer(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_buffer(), 0, VK_INDEX_TYPE_UINT16);
+        // vkCmdBindIndexBuffer(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_buffer(), 0, VK_INDEX_TYPE_UINT16);
 
         vkCmdBindDescriptorSets(command_lists[current_frame]->get_cmd_buffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->get_layout(), 0, 1, &descriptor_sets[current_frame], 0, nullptr);
 
-        vkCmdDrawIndexed(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_alloc_info().size / sizeof(uint16_t), 1, 0, 0, 0);
+        // vkCmdDrawIndexed(command_lists[current_frame]->get_cmd_buffer(), index_buffer.get_alloc_info().size / sizeof(uint16_t), 1, 0, 0, 0);
+
+        vkCmdDraw(command_lists[current_frame]->get_cmd_buffer(), vertices.size(), 1, 0, 0);
 
         command_lists[current_frame]->end_render_pass();
 
