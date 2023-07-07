@@ -15,7 +15,6 @@ swapchain::swapchain(weakref<window> p_window, weakref<device> p_device, const i
     , m_frames_in_flight(frames_in_flight)
     , m_present_mode(present_mode)
 {
-
     create_swapchain();
     create_image_views();
 }

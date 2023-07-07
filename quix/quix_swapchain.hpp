@@ -14,8 +14,8 @@ class swapchain {
 
 public:
     swapchain(weakref<window> p_window, weakref<device> p_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
-
     ~swapchain();
+
     swapchain(const swapchain&) = delete;
     swapchain& operator=(const swapchain&) = delete;
     swapchain(swapchain&&) = delete;

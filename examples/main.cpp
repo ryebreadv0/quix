@@ -7,8 +7,8 @@
 #include "quix_resource.hpp"
 #include "quix_window.hpp"
 
-// #define GLM_FORCE_RADIANS
-// #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -55,19 +55,23 @@ struct Vertex {
 };
 
 struct uniform_buffer_object {
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
+    alignas(16) glm::mat4 model;
+    alignas(16) glm::mat4 view;
+    alignas(16) glm::mat4 proj;
     uniform_buffer_object()
         : model(glm::mat4(1.0f))
         , view(glm::mat4(1.0f))
         , proj(glm::mat4(1.0f))
     {
+        // model = glm::rotate(glm::mat4(1.0f), 1.0f * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        proj = glm::perspective(glm::radians(90.0f), 800.0f/600.0f, 0.1f, 10.0f);
+        proj[1][1] *= -1;
     }
 
-    void update()
+    void update(float timestep)
     {
-        model = glm::rotate(model, glm::radians(0.1f), glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::rotate(glm::mat4(1.0f), glm::radians(glm::radians(90.0f))*timestep*100.0f, glm::vec3(0.0f, 1.0f, 0.0f));
     }
 };
 
@@ -83,13 +87,20 @@ int main()
 
     auto vertices = quix::create_auto_array<Vertex>(
         Vertex{glm::vec3{-0.5f, -0.5f, 0.0f}, glm::vec3{1.0f, 0.0f, 0.0f}, glm::vec2{0.0f, 0.0f}},
-        Vertex{glm::vec3{0.5f, -0.5f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec2{1.0f, 0.0f}},
-        Vertex{glm::vec3{0.5f, 0.5f, 0.0f}, glm::vec3{0.0f, 0.0f, 1.0f}, glm::vec2{1.0f, 1.0f}},
-        Vertex{glm::vec3{-0.5f, 0.5f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, glm::vec2{0.0f, 1.0f}}
+        Vertex{glm::vec3{ 0.5f, -0.5f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec2{1.0f, 0.0f}},
+        Vertex{glm::vec3{ 0.5f, 0.5f, 0.0f}, glm::vec3{0.0f, 0.0f, 1.0f}, glm::vec2{1.0f, 1.0f}},
+        Vertex{glm::vec3{-0.5f, 0.5f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, glm::vec2{0.0f, 1.0f}},
+
+        Vertex{glm::vec3{-0.5f, -0.5f, -0.5f}, glm::vec3{1.0f, 0.0f, 0.0f}, glm::vec2{0.0f, 0.0f}},
+        Vertex{glm::vec3{0.5f, -0.5f, -0.5f}, glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec2{1.0f, 0.0f}},
+        Vertex{glm::vec3{0.5f, 0.5f,  -0.5f}, glm::vec3{0.0f, 0.0f, 1.0f}, glm::vec2{1.0f, 1.0f}},
+        Vertex{glm::vec3{-0.5f, 0.5f,  -0.5f}, glm::vec3{1.0f, 1.0f, 1.0f}, glm::vec2{0.0f, 1.0f}}
     );
 
     auto indices = quix::create_auto_array<uint16_t>(
-        0, 1, 2, 2, 3, 0);
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4
+    );
 
     auto vertex_buffer = instance.create_buffer_handle();
     vertex_buffer.create_staged_buffer(sizeof(Vertex) * vertices.size(),
@@ -174,7 +185,7 @@ int main()
 
     auto pipeline = pipeline_builder.add_shader_stages(shader_stages)
                         .create_vertex_state(vertex_binding_description.data(), vertex_binding_description.size(), vertex_attribute_description.data(), vertex_attribute_description.size())
-                        .create_rasterization_state(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE)
+                        .create_rasterization_state(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
                         // .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
                         .add_descriptor_set_layout(descriptor_set_layout)
                         .create_graphics_pipeline();
@@ -198,6 +209,18 @@ int main()
 
     std::array<VkBuffer, 1> vertex_buffer_array = { vertex_buffer.get_buffer() };
     std::array<VkDeviceSize, 1> offsets = { 0 };
+
+    std::chrono::high_resolution_clock clock;
+    auto start_time = clock.now();
+
+    uniform_buffer_object uniform_buffer_main{};
+    auto update_uniform = [&](){
+        auto cur_time = clock.now();
+        float time = std::chrono::duration<float, std::chrono::seconds::period>(cur_time - start_time).count();
+        uniform_buffer_main.update(time);
+        memcpy(uniform_buffers[current_frame].get_mapped_data(), &uniform_buffer_main, sizeof(uniform_buffer_main));
+    };
+
 
     while (!window->should_close()) {
         window->poll_events();
@@ -223,13 +246,11 @@ int main()
 
         vkCmdDrawIndexed(command_lists[current_frame]->get_cmd_buffer(), indices.size(), 1, 0, 0, 0);
 
-        // vkCmdDraw(command_lists[current_frame]->get_cmd_buffer(), vertices.size(), 1, 0, 0);
-
         command_lists[current_frame]->end_render_pass();
 
         command_lists[current_frame]->end_record();
 
-        ((uniform_buffer_object*)uniform_buffers[current_frame].get_mapped_data())->update();
+        update_uniform();
 
         VK_CHECK(sync_objects.submit_frame(current_frame, command_lists[current_frame].get()), "failed to submit frame");
 

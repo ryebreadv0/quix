@@ -67,6 +67,12 @@ if (BUILD_QUIX_EXAMPLE)
             ${CMAKE_BINARY_DIR}/compile_commands.json
             ${CMAKE_SOURCE_DIR}/build/compile_commands.json
     )
+
+    add_custom_command(TARGET quix_example POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_BINARY_DIR}/compile_commands.json
+            ${CMAKE_SOURCE_DIR}/compile_commands.json
+    )
 endif()
 
 
