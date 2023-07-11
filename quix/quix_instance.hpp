@@ -36,8 +36,10 @@ public:
     instance& operator=(instance&&) = delete;
 
     void create_device(std::vector<const char*>&& requested_extensions, VkPhysicalDeviceFeatures requested_features);
-    void create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode);
-    void create_pipeline_manager();
+    void create_swapchain(const int32_t frames_in_flight, const VkPresentModeKHR present_mode, const bool depth_buffer);
+
+    NODISCARD render_target create_single_pass_render_target() noexcept;
+    NODISCARD render_target create_single_pass_depth_render_target() noexcept;
     NODISCARD render_target create_render_target(const VkRenderPassCreateInfo&& render_pass_create_info) noexcept;
     NODISCARD sync create_sync_objects() noexcept;
     
@@ -50,7 +52,7 @@ public:
     NODISCARD VkDevice get_logical_device() const noexcept;
     NODISCARD VkSurfaceFormatKHR get_surface_format() const noexcept;
 
-    NODISCARD weakref<graphics::pipeline_manager> get_pipeline_manager() const noexcept;
+    NODISCARD weakref<graphics::pipeline_manager> get_pipeline_manager() noexcept;
     NODISCARD command_pool get_command_pool();
 
     NODISCARD descriptor::allocator_pool get_descriptor_allocator_pool() const noexcept;
@@ -62,6 +64,7 @@ private:
     friend class swapchain;
 
     NODISCARD weakref<device> get_device() const noexcept;
+    void create_pipeline_manager();
 
     static constexpr std::size_t m_buffer_size = 2048;
     std::array<char, m_buffer_size> m_buffer{};

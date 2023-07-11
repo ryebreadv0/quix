@@ -6,6 +6,7 @@
 #include "quix_render_target.hpp"
 #include "quix_resource.hpp"
 #include "quix_window.hpp"
+#include <vulkan/vulkan_core.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -65,13 +66,13 @@ struct uniform_buffer_object {
     {
         // model = glm::rotate(glm::mat4(1.0f), 1.0f * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        proj = glm::perspective(glm::radians(90.0f), 800.0f/600.0f, 0.1f, 10.0f);
+        proj = glm::perspective(glm::radians(90.0f), 800.0f / 600.0f, 0.1f, 10.0f);
         proj[1][1] *= -1;
     }
 
     void update(float timestep)
     {
-        model = glm::rotate(glm::mat4(1.0f), glm::radians(glm::radians(90.0f))*timestep*100.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+        model = glm::rotate(glm::mat4(1.0f), glm::radians(glm::radians(90.0f)) * timestep * 100.0f, glm::vec3(0.0f, 1.0f, 0.0f));
     }
 };
 
@@ -82,25 +83,23 @@ int main()
         WIDTH, HEIGHT);
 
     instance.create_device({ VK_KHR_SWAPCHAIN_EXTENSION_NAME },
-        { });
-    instance.create_swapchain(FRAMES_IN_FLIGHT, VK_PRESENT_MODE_FIFO_KHR);
+        {});
+    instance.create_swapchain(FRAMES_IN_FLIGHT, VK_PRESENT_MODE_FIFO_KHR, true);
 
     auto vertices = quix::create_auto_array<Vertex>(
-        Vertex{glm::vec3{-0.5f, -0.5f, 0.0f}, glm::vec3{1.0f, 0.0f, 0.0f}, glm::vec2{0.0f, 0.0f}},
-        Vertex{glm::vec3{ 0.5f, -0.5f, 0.0f}, glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec2{1.0f, 0.0f}},
-        Vertex{glm::vec3{ 0.5f, 0.5f, 0.0f}, glm::vec3{0.0f, 0.0f, 1.0f}, glm::vec2{1.0f, 1.0f}},
-        Vertex{glm::vec3{-0.5f, 0.5f, 0.0f}, glm::vec3{1.0f, 1.0f, 1.0f}, glm::vec2{0.0f, 1.0f}},
+        Vertex { glm::vec3 { -0.5f, -0.5f, 0.0f }, glm::vec3 { 1.0f, 0.0f, 0.0f }, glm::vec2 { 0.0f, 0.0f } },
+        Vertex { glm::vec3 { 0.5f, -0.5f, 0.0f }, glm::vec3 { 0.0f, 1.0f, 0.0f }, glm::vec2 { 1.0f, 0.0f } },
+        Vertex { glm::vec3 { 0.5f, 0.5f, 0.0f }, glm::vec3 { 0.0f, 0.0f, 1.0f }, glm::vec2 { 1.0f, 1.0f } },
+        Vertex { glm::vec3 { -0.5f, 0.5f, 0.0f }, glm::vec3 { 1.0f, 1.0f, 1.0f }, glm::vec2 { 0.0f, 1.0f } },
 
-        Vertex{glm::vec3{-0.5f, -0.5f, -0.5f}, glm::vec3{1.0f, 0.0f, 0.0f}, glm::vec2{0.0f, 0.0f}},
-        Vertex{glm::vec3{0.5f, -0.5f, -0.5f}, glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec2{1.0f, 0.0f}},
-        Vertex{glm::vec3{0.5f, 0.5f,  -0.5f}, glm::vec3{0.0f, 0.0f, 1.0f}, glm::vec2{1.0f, 1.0f}},
-        Vertex{glm::vec3{-0.5f, 0.5f,  -0.5f}, glm::vec3{1.0f, 1.0f, 1.0f}, glm::vec2{0.0f, 1.0f}}
-    );
+        Vertex { glm::vec3 { -0.5f, -0.5f, -0.5f }, glm::vec3 { 1.0f, 0.0f, 0.0f }, glm::vec2 { 0.0f, 0.0f } },
+        Vertex { glm::vec3 { 0.5f, -0.5f, -0.5f }, glm::vec3 { 0.0f, 1.0f, 0.0f }, glm::vec2 { 1.0f, 0.0f } },
+        Vertex { glm::vec3 { 0.5f, 0.5f, -0.5f }, glm::vec3 { 0.0f, 0.0f, 1.0f }, glm::vec2 { 1.0f, 1.0f } },
+        Vertex { glm::vec3 { -0.5f, 0.5f, -0.5f }, glm::vec3 { 1.0f, 1.0f, 1.0f }, glm::vec2 { 0.0f, 1.0f } });
 
     auto indices = quix::create_auto_array<uint16_t>(
         0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4
-    );
+        4, 5, 6, 6, 7, 4);
 
     auto vertex_buffer = instance.create_buffer_handle();
     vertex_buffer.create_staged_buffer(sizeof(Vertex) * vertices.size(),
@@ -127,34 +126,8 @@ int main()
         *((uniform_buffer_object*)uniform_buffer.get_mapped_data()) = uniform_buffer_object {};
     }
 
-    quix::renderpass_info<1, 1, 1> renderpass_info {};
-    renderpass_info.attachments[0].format = instance.get_surface_format().format;
-    renderpass_info.attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-    renderpass_info.attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    renderpass_info.attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    renderpass_info.attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    renderpass_info.attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    renderpass_info.attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    renderpass_info.attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    auto render_target = instance.create_single_pass_depth_render_target();
 
-    renderpass_info.attachment_references[0].attachment = 0;
-    renderpass_info.attachment_references[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    renderpass_info.subpasses[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    renderpass_info.subpasses[0].colorAttachmentCount = 1;
-    renderpass_info.subpasses[0].pColorAttachments = renderpass_info.attachment_references.data();
-
-    renderpass_info.subpass_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-    renderpass_info.subpass_dependencies[0].dstSubpass = 0;
-    renderpass_info.subpass_dependencies[0].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    renderpass_info.subpass_dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    renderpass_info.subpass_dependencies[0].srcAccessMask = 0;
-    renderpass_info.subpass_dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    renderpass_info.subpass_dependencies[0].dependencyFlags = 0;
-
-    auto render_target = instance.create_render_target(renderpass_info.export_renderpass_info());
-
-    instance.create_pipeline_manager();
     auto pipeline_manager = instance.get_pipeline_manager();
     auto pipeline_builder = pipeline_manager->create_pipeline_builder(&render_target);
 
@@ -188,23 +161,22 @@ int main()
                         .create_rasterization_state(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
                         // .add_push_constant(VK_SHADER_STAGE_VERTEX_BIT, sizeof(float) * 4)
                         .add_descriptor_set_layout(descriptor_set_layout)
+                        .create_depth_stencil_state(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS)
                         .create_graphics_pipeline();
 
-    auto command_pool = instance.get_command_pool();
-
     auto window = instance.get_window();
+    auto command_pool = instance.get_command_pool();
+    auto sync_objects = instance.create_sync_objects();
 
     int current_frame = 0;
     uint32_t current_image_index = 0;
-
-    auto sync_objects = instance.create_sync_objects();
 
     std::array<quix::allocated_unique_ptr<quix::command_list>, FRAMES_IN_FLIGHT> command_lists {
         command_pool.create_command_list(), command_pool.create_command_list()
     };
 
-    std::array<VkClearValue, 1> clear_values = {
-        { { 0.0f, 0.0f, 0.0f, 1.0f } }
+    std::array<VkClearValue, 2> clear_values = {
+        { { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } }
     };
 
     std::array<VkBuffer, 1> vertex_buffer_array = { vertex_buffer.get_buffer() };
@@ -213,14 +185,13 @@ int main()
     std::chrono::high_resolution_clock clock;
     auto start_time = clock.now();
 
-    uniform_buffer_object uniform_buffer_main{};
-    auto update_uniform = [&](){
+    uniform_buffer_object uniform_buffer_main {};
+    auto update_uniform = [&]() {
         auto cur_time = clock.now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(cur_time - start_time).count();
         uniform_buffer_main.update(time);
         memcpy(uniform_buffers[current_frame].get_mapped_data(), &uniform_buffer_main, sizeof(uniform_buffer_main));
     };
-
 
     while (!window->should_close()) {
         window->poll_events();

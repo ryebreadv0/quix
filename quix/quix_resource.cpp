@@ -6,6 +6,7 @@
 #include "quix_commands.hpp"
 #include "quix_device.hpp"
 #include "quix_instance.hpp"
+#include <vulkan/vulkan_core.h>
 
 namespace quix {
 
@@ -125,6 +126,11 @@ image_handle::image_handle(weakref<device> p_device)
 
 image_handle::~image_handle()
 {
+    destroy_image();
+}
+
+void image_handle::destroy_image()
+{
     if (m_sampler != VK_NULL_HANDLE) {
         vkDestroySampler(m_device->get_logical_device(), m_sampler, nullptr);
     }
@@ -222,14 +228,40 @@ image_handle& image_handle::create_image_from_file(const char* filepath, instanc
     return *this;
 }
 
-image_handle& image_handle::create_view()
+image_handle& image_handle::create_depth_image(uint32_t width, uint32_t height, VkFormat format)
+{
+    VkImageCreateInfo image_info{};
+    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_info.imageType = VK_IMAGE_TYPE_2D;
+    image_info.extent.width = width;
+    image_info.extent.height = height;
+    image_info.extent.depth = 1;
+    image_info.mipLevels = 1;
+    image_info.arrayLayers = 1;
+    image_info.format = format;
+    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    image_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo alloc_info{};
+    alloc_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    alloc_info.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+
+    create_image(&image_info, &alloc_info);
+
+    return *this;
+}
+
+image_handle& image_handle::create_view(VkImageAspectFlags aspect_flags)
 {
     VkImageViewCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     create_info.image = m_image;
     create_info.viewType = type_to_view_type();
     create_info.format = m_format;
-    create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT; // TODO might need support for other aspect masks later on? though depth buffer views are created automatically so maybe not
+    create_info.subresourceRange.aspectMask = aspect_flags;
     create_info.subresourceRange.baseMipLevel = 0;
     create_info.subresourceRange.levelCount = m_mip_levels;
     create_info.subresourceRange.baseArrayLayer = 0;

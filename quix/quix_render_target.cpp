@@ -6,6 +6,7 @@
 #include "quix_device.hpp"
 #include "quix_swapchain.hpp"
 #include "quix_window.hpp"
+#include "quix_resource.hpp"
 
 namespace quix {
 
@@ -89,17 +90,25 @@ void render_target::create_renderpass(const VkRenderPassCreateInfo* renderpass_i
 void render_target::create_framebuffers()
 {
     const auto& swapchain_image_views = m_swapchain->get_image_views();
+    auto *depth_view = m_swapchain->depth_image->get_view();
+    uint32_t attachment_count;
+    if (depth_view != VK_NULL_HANDLE) {
+        attachment_count = 2;
+    } else {
+        attachment_count = 1;
+    }
 
     m_framebuffers.resize(swapchain_image_views.size());
     for (size_t i = 0; i < swapchain_image_views.size(); i++) {
-        VkImageView attachments[] = {
-            swapchain_image_views[i]
+        VkImageView attachments[2] = {
+            swapchain_image_views[i],
+            depth_view
         };
 
         VkFramebufferCreateInfo framebuffer_info {};
         framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebuffer_info.renderPass = m_render_pass;
-        framebuffer_info.attachmentCount = 1;
+        framebuffer_info.attachmentCount = attachment_count;
         framebuffer_info.pAttachments = attachments;
         framebuffer_info.width = m_swapchain->get_extent().width;
         framebuffer_info.height = m_swapchain->get_extent().height;

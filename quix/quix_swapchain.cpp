@@ -3,17 +3,20 @@
 
 #include "quix_swapchain.hpp"
 
+#include "quix_device.hpp"
 #include "quix_instance.hpp"
 #include "quix_window.hpp"
-#include "quix_device.hpp"
+#include <initializer_list>
 
 namespace quix {
 
-swapchain::swapchain(weakref<window> p_window, weakref<device> p_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode)
-    : m_window(std::move(p_window))
+swapchain::swapchain(weakref<instance> p_instance, weakref<window> p_window, weakref<device> p_device, const int32_t frames_in_flight, const VkPresentModeKHR present_mode, const bool depth_buffer)
+    : m_instance(std::move(p_instance))
+    , m_window(std::move(p_window))
     , m_device(std::move(p_device))
     , m_frames_in_flight(frames_in_flight)
     , m_present_mode(present_mode)
+    , depth_buffer_enabled(depth_buffer)
 {
     create_swapchain();
     create_image_views();
@@ -21,9 +24,9 @@ swapchain::swapchain(weakref<window> p_window, weakref<device> p_device, const i
 
 swapchain::~swapchain()
 {
+    destroy_depth_image();
     destroy_image_views();
     destroy_swapchain();
-
 }
 
 void swapchain::recreate_swapchain()
@@ -89,7 +92,10 @@ void swapchain::create_swapchain(VkSwapchainKHR old_swapchain)
     vkGetSwapchainImagesKHR(m_device->get_logical_device(), m_swapchain, &imageCount, nullptr);
     m_swapchain_images.resize(imageCount);
     vkGetSwapchainImagesKHR(m_device->get_logical_device(), m_swapchain, &imageCount, m_swapchain_images.data());
-
+    
+    if (depth_buffer_enabled) {
+        create_depth_image();
+    }
 }
 
 void swapchain::destroy_swapchain()
@@ -120,7 +126,6 @@ void swapchain::create_image_views()
 
         VK_CHECK(vkCreateImageView(m_device->get_logical_device(), &createInfo, nullptr, &m_swapchain_image_views[i]), "failed to create image views");
     }
-
 }
 
 void swapchain::destroy_image_views()
@@ -128,6 +133,23 @@ void swapchain::destroy_image_views()
     for (auto& image_view : m_swapchain_image_views) {
         vkDestroyImageView(m_device->get_logical_device(), image_view, nullptr);
     }
+}
+
+void swapchain::create_depth_image()
+{
+    if (depth_image == nullptr) {
+        depth_image = new image_handle(m_device);
+    } else {
+        depth_image->destroy_image();
+    }
+
+    depth_image->create_depth_image(m_swapchain_extent.width, m_swapchain_extent.height, find_depth_format());
+    depth_image->create_view(VK_IMAGE_ASPECT_DEPTH_BIT);
+}
+
+void swapchain::destroy_depth_image()
+{
+    delete depth_image;
 }
 
 NODISCARD VkSurfaceFormatKHR swapchain::choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& available_formats) const noexcept
@@ -139,7 +161,7 @@ NODISCARD VkSurfaceFormatKHR swapchain::choose_swap_surface_format(const std::ve
     }
 
     spdlog::warn("preferred surface format was not found, using first available");
-    
+
     return available_formats[0];
 }
 
@@ -173,6 +195,39 @@ NODISCARD VkExtent2D swapchain::choose_swap_extent(const VkSurfaceCapabilitiesKH
 
         return actualExtent;
     }
+}
+
+NODISCARD VkFormat swapchain::find_supported_format(const std::initializer_list<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+{
+    for (VkFormat format : candidates) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(m_device->get_physical_device(), format, &props);
+        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+            return format;
+        } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+            return format;
+        }
+    }
+
+    quix_error("failed to find support format");
+    return *candidates.begin(); // this should never happen
+}
+
+NODISCARD VkFormat swapchain::find_depth_format()
+{
+    if (!depth_format.has_value()) {
+        depth_format = find_supported_format(
+            { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+    }
+
+    return depth_format.value();
+}
+
+NODISCARD bool swapchain::has_stencil_component(VkFormat format)
+{
+    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
 } // namespace quix

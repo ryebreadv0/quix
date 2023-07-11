@@ -91,8 +91,8 @@ template <typename StrType>
 constexpr inline void quix_error(StrType error, const char* file, int line) noexcept
 {
     fmt::print("Error [{}:{}] {}", file, line, error);
-    // exit(EXIT_FAILURE);
-    abort();
+    exit(EXIT_FAILURE);
+//    abort();
 }
 
 #define quix_error(error) quix::quix_error(error, __FILE__, __LINE__)

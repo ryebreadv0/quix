@@ -63,8 +63,9 @@ public:
     void create_image(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
 
     image_handle& create_image_from_file(const char* filepath, instance* inst);
+    image_handle& create_depth_image(uint32_t width, uint32_t height, VkFormat format);
 
-    image_handle& create_view();
+    image_handle& create_view(VkImageAspectFlags aspect_flags = VK_IMAGE_ASPECT_COLOR_BIT);
     image_handle& create_sampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode);
     image_handle& create_sampler(VkFilter m_filter, VkSamplerAddressMode sampler_address_mode, float anisotropy);
 
@@ -80,6 +81,8 @@ public:
         info.sampler = m_sampler;
         return info;
     }
+
+    void destroy_image();
 
 private:
 
