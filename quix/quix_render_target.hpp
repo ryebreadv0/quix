@@ -9,22 +9,22 @@ class swapchain;
 
 template <std::size_t Attachments, std::size_t Subpasses, std::size_t Dependencies>
 struct renderpass_info {
-    std::array<VkAttachmentDescription, Attachments> attachments{};
-    std::array<VkAttachmentReference, Attachments> attachment_references{};
-    std::array<VkSubpassDescription, Subpasses> subpasses{};
-    std::array<VkSubpassDependency, Dependencies> subpass_dependencies{};
+    std::array<VkAttachmentDescription, Attachments> attachments {};
+    std::array<VkAttachmentReference, Attachments> attachment_references {};
+    std::array<VkSubpassDescription, Subpasses> subpasses {};
+    std::array<VkSubpassDependency, Dependencies> subpass_dependencies {};
 
     NODISCARD VkRenderPassCreateInfo export_renderpass_info() const noexcept
     {
-        return VkRenderPassCreateInfo {
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-            .attachmentCount = Attachments,
-            .pAttachments = attachments.data(),
-            .subpassCount = Subpasses,
-            .pSubpasses = subpasses.data(),
-            .dependencyCount = Dependencies,
-            .pDependencies = subpass_dependencies.data()
-        };
+        VkRenderPassCreateInfo createInfo {};
+        createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        createInfo.attachmentCount = Attachments;
+        createInfo.pAttachments = attachments.data();
+        createInfo.subpassCount = Subpasses;
+        createInfo.pSubpasses = subpasses.data();
+        createInfo.dependencyCount = Dependencies;
+        createInfo.pDependencies = subpass_dependencies.data();
+        return createInfo;
     }
 };
 

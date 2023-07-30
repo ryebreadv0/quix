@@ -3,8 +3,6 @@
 
 #include "quix_commands.hpp"
 
-#include <utility>
-
 #include "quix_device.hpp"
 #include "quix_pipeline.hpp"
 #include "quix_render_target.hpp"

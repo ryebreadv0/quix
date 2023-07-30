@@ -10,7 +10,30 @@ include(cmake/CPM.cmake)
 
 CPMAddPackage("gh:nothings/stb#master")
 CPMAddPackage("gh:gabime/spdlog@1.11.0")
-CPMAddPackage("gh:glfw/glfw#3.3.8")
+CPMAddPackage(
+	NAME glfw
+	GITHUB_REPOSITORY glfw/glfw
+	GIT_TAG 3.3.8
+	VERSION 3.3.8
+	DOWNLOAD_ONLY True
+)
+
+if (UNIX)
+	execute_process(
+		COMMAND /usr/bin/bash ${CMAKE_CURRENT_SOURCE_DIR}/iswayland.sh
+		RESULT_VARIABLE WAYLAND_CHECK
+		OUTPUT_QUIET
+		ERROR_QUIET
+		)
+	message("Wayland check result ${WAYLAND_CHECK}")
+	if (WAYLAND_CHECK EQUAL 1)
+		message("Wayland session found, enabling glfw option for wayland")
+		option(GLFW_USE_WAYLAND "Use Wayland for window creation" ON)
+	endif()
+endif()
+
+add_subdirectory(${glfw_SOURCE_DIR})
+
 CPMAddPackage(
     NAME glslang
     GITHUB_REPOSITORY KhronosGroup/glslang
