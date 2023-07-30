@@ -1,1 +1,0 @@
-clang-tidy -p build/debug examples/main.cpp
