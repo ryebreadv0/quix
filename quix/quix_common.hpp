@@ -4,7 +4,7 @@
 namespace quix {
 
 template <typename Type, typename... Args>
-NODISCARD static inline constexpr auto create_auto_array(Args&&... args)
+NODISCARD static constexpr auto create_auto_array(Args&&... args)
 {
     return std::array<Type, sizeof...(Args)> { std::forward<Args>(args)... };
 }
@@ -21,7 +21,7 @@ concept is_allocator = requires(Type a, size_t size, size_t alignment) {
 };
 
 template <typename Type, typename Allocator, typename... Args>
-NODISCARD constexpr inline Type* allocate_ptr(Allocator& allocator, Args&&... args)
+NODISCARD constexpr Type* allocate_ptr(Allocator& allocator, Args&&... args)
     requires is_allocator<Allocator>
 {
     void* allocation = allocator.allocate(sizeof(Type), alignof(Type));
@@ -30,7 +30,7 @@ NODISCARD constexpr inline Type* allocate_ptr(Allocator& allocator, Args&&... ar
 }
 
 template <typename Type, typename Allocator, typename... Args>
-NODISCARD constexpr inline std::shared_ptr<Type> allocate_shared(Allocator* allocator, Args&&... args)
+NODISCARD constexpr std::shared_ptr<Type> allocate_shared(Allocator* allocator, Args&&... args)
     requires is_allocator<Allocator>
 {
     return std::allocate_shared<Type, std::pmr::polymorphic_allocator<Type>>(allocator, std::forward<Args>(args)...);
@@ -40,7 +40,7 @@ template <typename Type>
 using allocated_unique_ptr = std::unique_ptr<Type, std::function<void(Type*)>>;
 
 template <typename Type, typename Allocator, typename... Args>
-NODISCARD constexpr inline allocated_unique_ptr<Type> allocate_unique(Allocator* allocator, Args&&... args)
+NODISCARD constexpr allocated_unique_ptr<Type> allocate_unique(Allocator* allocator, Args&&... args)
     requires is_allocator<Allocator>
 {
     void* allocation = allocator->allocate(sizeof(Type), alignof(Type));
@@ -54,7 +54,7 @@ NODISCARD constexpr inline allocated_unique_ptr<Type> allocate_unique(Allocator*
 }
 
 template <typename StrType>
-constexpr inline void VK_CHECK(VkResult result, StrType error, const char* file, int line) noexcept(true)
+constexpr void VK_CHECK(VkResult result, StrType error, const char* file, int line) noexcept(true)
 {
     UNLIKELY if (result != VK_SUCCESS)
     {

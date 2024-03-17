@@ -82,7 +82,6 @@ NODISCARD VkCommandPool device::get_command_pool()
 
         VkCommandPool pool = VK_NULL_HANDLE;
         VK_CHECK(vkCreateCommandPool(m_logical_device, &pool_info, nullptr, &pool), "failed to create command pool");
-        
 
         return pool;
     }
@@ -90,7 +89,6 @@ NODISCARD VkCommandPool device::get_command_pool()
     std::lock_guard<std::mutex> lock(m_command_pool_mutex);
     VkCommandPool pool = m_command_pools.front();
     m_command_pools.pop_front();
-
 
     return pool;
 }
@@ -381,14 +379,14 @@ int device::rate_physical_device(VkPhysicalDevice physical_device)
         score += 1;
         break;
     default:
-        spdlog::warn("Unknown device type: {}", properties.deviceType);
+        spdlog::warn("Unknown device type: {}", (size_t)properties.deviceType);
         score = 0;
         return score;
         break;
     }
 
     spdlog::trace("Device: {} score: {}", properties.deviceName, score);
-    
+
     return score;
 }
 
@@ -435,7 +433,6 @@ void device::pick_physical_device()
     }
 
     quix_assert(m_physical_device != VK_NULL_HANDLE, "failed to find a suitable GPU");
-
 }
 
 void device::create_logical_device()
@@ -472,7 +469,6 @@ void device::create_logical_device()
 
     vkGetDeviceQueue(m_logical_device, indices.graphics_family.value(), 0, &m_graphics_queue);
     vkGetDeviceQueue(m_logical_device, indices.present_family.value(), 0, &m_present_queue);
-
 }
 
 void device::create_allocator()
@@ -484,7 +480,6 @@ void device::create_allocator()
     allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_3,
 
     VK_CHECK(vmaCreateAllocator(&allocatorInfo, &m_allocator), "failed to create VMA allocator");
-
 }
 
 } // namespace quix

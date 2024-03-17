@@ -12,8 +12,10 @@
 
 namespace quix {
 
-static glslang::EShTargetClientVersion eshTargetClientVersion = glslang::EShTargetVulkan_1_3;
-static glslang::EShTargetLanguageVersion eshTargetLanguageVersion = glslang::EShTargetSpv_1_3;
+namespace {
+    glslang::EShTargetClientVersion eshTargetClientVersion = glslang::EShTargetVulkan_1_3;
+    glslang::EShTargetLanguageVersion eshTargetLanguageVersion = glslang::EShTargetSpv_1_3;
+}
 
 // shader class
 shader::shader(const char* path, EShLanguage stage)
@@ -54,19 +56,19 @@ shader::shader(const char* path, EShLanguage stage)
     spdlog::trace("Shader created from {}", path);
 }
 
-std::vector<uint32_t> shader::getSpirvCode()
+std::vector<uint32_t>& shader::getSpirvCode()
 {
     return code;
 }
 
 VkShaderModule shader::createShaderModule(VkDevice device)
 {
-    VkShaderModuleCreateInfo createInfo = {};
+    VkShaderModuleCreateInfo createInfo {};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = code.size() * sizeof(uint32_t);
     createInfo.pCode = code.data();
 
-    VkShaderModule shaderModule;
+    VkShaderModule shaderModule {};
     VK_CHECK(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule), "failed to create shader module");
 
     return shaderModule;
@@ -85,7 +87,7 @@ void shader::loadSpvCode(const char* file)
     code.resize(fileSize / sizeof(uint32_t));
     (void)fread(code.data(), sizeof(uint32_t), fileSize / sizeof(uint32_t), handle);
 
-    auto result= fclose(handle);
+    auto result = fclose(handle);
     quix_assert(result == 0, "failed to close file");
 }
 
@@ -153,55 +155,54 @@ void shader::compileShader(EShLanguage stage, const char* path, const char* cSpv
     glslang::GlslangToSpv(*program.getIntermediate(stage), code);
 
     // optimize spirv
-    spdlog::trace("Optimizing spirv code for {}", path);
+    // spdlog::trace("Optimizing spirv code for {}", path);
+    //
+    // spvtools::Optimizer optimizer(SPV_ENV_UNIVERSAL_1_3);
+    // optimizer.SetMessageConsumer([](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message) {
+    //     if (level == SPV_MSG_FATAL || level == SPV_MSG_INTERNAL_ERROR) {
+    //         quix_error(fmt::format("fatal error: {} {}", source, message));
+    //     } else if (level == SPV_MSG_ERROR) {
+    //         spdlog::error("{} {}: {}", source, position.index, message);
+    //     } else if (level == SPV_MSG_WARNING) {
+    //         spdlog::warn("{} {}: {}", source, position.index, message);
+    //     } else if (level == SPV_MSG_INFO) {
+    //         spdlog::info("{} {}: {}", source, position.index, message);
+    //     } else if (level == SPV_MSG_DEBUG) {
+    //         spdlog::debug("{} {}: {}", source, position.index, message);
+    //     }
+    // });
+    //
+    // optimizer.RegisterLegalizationPasses();
+    // optimizer.RegisterPerformancePasses();
+    // optimizer.RegisterSizePasses();
+    //
+    // // I will be honest I don't know how this thing works
+    // optimizer.RegisterPass(spvtools::CreateSetSpecConstantDefaultValuePass({ { 1, "42" } }))
+    //     .RegisterPass(spvtools::CreateFreezeSpecConstantValuePass())
+    //     .RegisterPass(spvtools::CreateUnifyConstantPass())
+    //     .RegisterPass(spvtools::CreateStripDebugInfoPass())
+    //     .RegisterPass(spvtools::CreateEliminateDeadConstantPass())
+    //     .RegisterPass(spvtools::CreateFoldSpecConstantOpAndCompositePass());
+    //
+    // quix_assert(optimizer.Run(code.data(), code.size(), &code), "failed to optimize shader");
 
-    spvtools::Optimizer optimizer(SPV_ENV_UNIVERSAL_1_3);
-    optimizer.SetMessageConsumer([](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message) {
-        if (level == SPV_MSG_FATAL || level == SPV_MSG_INTERNAL_ERROR) {
-            quix_error(fmt::format("fatal error: {} {}", source, message));
-        } else if (level == SPV_MSG_ERROR) {
-            spdlog::error("{} {}: {}", source, position.index, message);
-        } else if (level == SPV_MSG_WARNING) {
-            spdlog::warn("{} {}: {}", source, position.index, message);
-        } else if (level == SPV_MSG_INFO) {
-            spdlog::info("{} {}: {}", source, position.index, message);
-        } else if (level == SPV_MSG_DEBUG) {
-            spdlog::debug("{} {}: {}", source, position.index, message);
-        }
-    });
-
-    optimizer.RegisterLegalizationPasses();
-    optimizer.RegisterPerformancePasses();
-    optimizer.RegisterSizePasses();
-
-    // I will be honest I don't know how this thing works
-    optimizer.RegisterPass(spvtools::CreateSetSpecConstantDefaultValuePass({ { 1, "42" } }))
-        .RegisterPass(spvtools::CreateFreezeSpecConstantValuePass())
-        .RegisterPass(spvtools::CreateUnifyConstantPass())
-        .RegisterPass(spvtools::CreateStripDebugInfoPass())
-        .RegisterPass(spvtools::CreateEliminateDeadConstantPass())
-        .RegisterPass(spvtools::CreateFoldSpecConstantOpAndCompositePass());
-
-    quix_assert(optimizer.Run(code.data(), code.size(), &code), "failed to optimize shader");
-
-    spvtools::SpirvTools core(SPV_ENV_UNIVERSAL_1_3);
-    core.SetMessageConsumer([](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message) {
-        if (level == SPV_MSG_FATAL || level == SPV_MSG_INTERNAL_ERROR) {
-            quix_error(fmt::format("fatal error: {} {}", source, message));
-        } else if (level == SPV_MSG_ERROR) {
-            spdlog::error("{} {}: {}", source, position.index, message);
-        } else if (level == SPV_MSG_WARNING) {
-            spdlog::warn("{} {}: {}", source, position.index, message);
-        } else if (level == SPV_MSG_INFO) {
-            spdlog::info("{} {}: {}", source, position.index, message);
-        } else if (level == SPV_MSG_DEBUG) {
-            spdlog::debug("{} {}: {}", source, position.index, message);
-        }
-    });
-
-    bool validationResult = core.Validate(code);
-
-    quix_assert(validationResult == true, fmt::format("error in {}", path));
+    // spvtools::SpirvTools core(SPV_ENV_UNIVERSAL_1_3);
+    // core.SetMessageConsumer([](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message) {
+    //     if (level == SPV_MSG_FATAL || level == SPV_MSG_INTERNAL_ERROR) {
+    //         quix_error(fmt::format("fatal error: {} {}", source, message));
+    //     } else if (level == SPV_MSG_ERROR) {
+    //         spdlog::error("{} {}: {}", source, position.index, message);
+    //     } else if (level == SPV_MSG_WARNING) {
+    //         spdlog::warn("{} {}: {}", source, position.index, message);
+    //     } else if (level == SPV_MSG_INFO) {
+    //         spdlog::info("{} {}: {}", source, position.index, message);
+    //     } else if (level == SPV_MSG_DEBUG) {
+    //         spdlog::debug("{} {}: {}", source, position.index, message);
+    //     }
+    // });
+    //
+    // bool validationResult = core.Validate(code);
+    // quix_assert(validationResult == true, fmt::format("error in {}", path));
 
     // save the spv code to a file
     saveSpvCode(cSpvPath);

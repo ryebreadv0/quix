@@ -1,7 +1,6 @@
 #ifndef _QUIX_PIPELINE_BUILDER_HPP
 #define _QUIX_PIPELINE_BUILDER_HPP
 
-#include <vulkan/vulkan_core.h>
 namespace quix {
 
 class device;

@@ -3,13 +3,7 @@ cmake_minimum_required(VERSION 3.24)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror") # -fsanitize=address
 # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
 
-find_package(spdlog REQUIRED)
-find_package(Vulkan REQUIRED)
-find_package(glfw REQUIRED)
-find_package(glslang REQUIRED)
-find_package(stb REQUIRED)
-
-project(quix)
+project(quix C CXX)
 
 add_library(${PROJECT_NAME}
     quix_instance.cpp
@@ -25,10 +19,10 @@ add_library(${PROJECT_NAME}
     quix_resource.cpp
 )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    COMPILE_OPTIONS -fsanitize=address
-    LINK_OPTIONS -fsanitize=address
-)
+# set_target_properties(${PROJECT_NAME} PROPERTIES
+#     COMPILE_OPTIONS -fsanitize=address
+#     LINK_OPTIONS -fsanitize=address
+# )
 
 target_precompile_headers(${PROJECT_NAME} 
     PUBLIC quix_pch.hpp
@@ -39,13 +33,10 @@ target_link_libraries(${PROJECT_NAME}
     Vulkan::Vulkan
     glfw
     quix_impl
-    glslang
-    glslang-default-resource-limits
-    OGLCompiler
-    OSDependent
-    HLSL
-    SPIRV
-    SPIRV-Tools-opt
+    glslang::glslang
+    glslang::glslang-default-resource-limits
+    glslang::SPIRV
+    glslang::SPVRemapper
 )
 
 target_include_directories(${PROJECT_NAME} 

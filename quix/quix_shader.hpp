@@ -6,6 +6,7 @@ namespace quix {
 class shader {
 public:
     shader(const char* path, EShLanguage stage);
+    ~shader() = default;
 
     shader(const shader&) = delete;
     shader& operator=(const shader&) = delete;
@@ -14,7 +15,7 @@ public:
 
     static void setShaderVersion(uint32_t apiVersion);
 
-    std::vector<uint32_t> getSpirvCode();
+    std::vector<uint32_t>& getSpirvCode();
     VkShaderModule createShaderModule(VkDevice device);
 
 private:
