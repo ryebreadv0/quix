@@ -7,7 +7,6 @@ endif()
 include(cmake/CPM.cmake)
 
 CPMAddPackage("gh:nothings/stb#master") 
-# CPMAddPackage("gh:gabime/spdlog@1.11.0")
 
 project(p C CXX)
 
@@ -18,7 +17,6 @@ find_package(Threads REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glslang CONFIG REQUIRED)
-find_package(Vulkan REQUIRED)
 
 
 add_subdirectory(quix_impl)

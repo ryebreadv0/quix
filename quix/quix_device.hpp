@@ -98,11 +98,11 @@ private:
     std::vector<const char*> requested_extensions {};
     VkPhysicalDeviceFeatures requested_features {};
 
-    std::optional<queue_family_indices> m_queue_family_indices;
+    std::optional<queue_family_indices> m_queue_family_indices {};
     float max_sampler_anisotropy{};
 
-    std::deque<VkCommandPool> m_command_pools;
-    std::mutex m_command_pool_mutex;
+    std::deque<VkCommandPool> m_command_pools {};
+    std::mutex m_command_pool_mutex {};
 };
 
 } // namespace quix

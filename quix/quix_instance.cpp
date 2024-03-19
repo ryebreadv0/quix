@@ -12,7 +12,6 @@
 #include "quix_resource.hpp"
 #include "quix_swapchain.hpp"
 #include "quix_window.hpp"
-#include <vulkan/vulkan_core.h>
 
 namespace quix {
 

@@ -37,7 +37,7 @@ public:
 
     // if I ever care about speed I am just going to write my own windowing library,
     // the default interface is terrible and I refuse to not use it this way.
-    inline void set_key_callback(std::function<void(GLFWwindow*, int, int, int, int)> callback) noexcept
+    void set_key_callback(std::function<void(GLFWwindow*, int, int, int, int)> callback) noexcept
     {
         if (key_callback == nullptr) {
             enable_key_callback();
@@ -45,7 +45,7 @@ public:
         key_callback = std::move(callback);
     }
 
-    inline void set_cursor_callback(std::function<void(GLFWwindow*, double, double)> callback) noexcept
+    void set_cursor_callback(std::function<void(GLFWwindow*, double, double)> callback) noexcept
     {
         if (cursor_callback == nullptr) {
             enable_cursor_callback();
@@ -53,7 +53,7 @@ public:
         cursor_callback = std::move(callback);
     }
 
-    inline void set_mouse_button_callback(std::function<void(GLFWwindow*, int, int, int)> callback) noexcept
+    void set_mouse_button_callback(std::function<void(GLFWwindow*, int, int, int)> callback) noexcept
     {
         if (mouse_button_callback == nullptr) {
             enable_mouse_button_callback();
@@ -62,7 +62,7 @@ public:
     }
 
 private:
-    inline void get_surface(VkInstance instance, VkSurfaceKHR* surface)
+    void get_surface(VkInstance instance, VkSurfaceKHR* surface)
     {
         VK_CHECK(glfwCreateWindowSurface(instance, m_window, nullptr, surface), "failed to create window surface");
     }
