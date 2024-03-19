@@ -14,8 +14,8 @@ public:
     ~buffer_handle();
     buffer_handle(const buffer_handle&) = delete;
     buffer_handle& operator=(const buffer_handle&) = delete;
-    buffer_handle(buffer_handle&&) = delete;
-    buffer_handle& operator=(buffer_handle&&) = delete;
+    buffer_handle(buffer_handle&&) = default;
+    buffer_handle& operator=(buffer_handle&&) = default;
 
     void create_buffer(const VkBufferCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
     void create_uniform_buffer(const VkDeviceSize size);
@@ -34,7 +34,7 @@ public:
     NODISCARD inline VkDeviceSize get_offset() const noexcept { return m_alloc_info.offset; }
     NODISCARD inline VkDescriptorBufferInfo get_descriptor_info(uint32_t offset = 0)
     {
-        VkDescriptorBufferInfo info{};
+        VkDescriptorBufferInfo info {};
         info.buffer = m_buffer;
         info.offset = offset;
         info.range = m_alloc_info.size;
@@ -42,7 +42,6 @@ public:
     }
 
 private:
-
     weakref<device> m_device;
     VmaAllocation m_alloc {};
     VmaAllocationInfo m_alloc_info {};
@@ -50,15 +49,16 @@ private:
 };
 
 class image_handle {
-friend class command_list;
+    friend class command_list;
+
 public:
     explicit image_handle(weakref<device> p_device);
 
     ~image_handle();
     image_handle(const image_handle&) = delete;
     image_handle& operator=(const image_handle&) = delete;
-    image_handle(image_handle&&) = delete;
-    image_handle& operator=(image_handle&&) = delete;
+    image_handle(image_handle&&) = default;
+    image_handle& operator=(image_handle&&) = default;
 
     void create_image(const VkImageCreateInfo* create_info, const VmaAllocationCreateInfo* alloc_info);
 
@@ -75,7 +75,7 @@ public:
 
     NODISCARD inline VkDescriptorImageInfo get_descriptor_info()
     {
-        VkDescriptorImageInfo info{};
+        VkDescriptorImageInfo info {};
         info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         info.imageView = m_view;
         info.sampler = m_sampler;
@@ -85,7 +85,6 @@ public:
     void destroy_image();
 
 private:
-
     constexpr VkImageViewType type_to_view_type();
 
     weakref<device> m_device;
@@ -95,13 +94,12 @@ private:
     VkImageView m_view = VK_NULL_HANDLE;
     VkSampler m_sampler = VK_NULL_HANDLE;
 
-    VkImageType m_type{};
-    VkFormat m_format{};
-    uint32_t m_mip_levels{};
-    uint32_t m_array_layers{};
-    VkSampleCountFlagBits m_samples{};
-    VkExtent3D m_extent{};
-
+    VkImageType m_type {};
+    VkFormat m_format {};
+    uint32_t m_mip_levels {};
+    uint32_t m_array_layers {};
+    VkSampleCountFlagBits m_samples {};
+    VkExtent3D m_extent {};
 };
 
 } // namespace quix

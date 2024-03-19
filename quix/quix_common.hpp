@@ -126,15 +126,15 @@ struct weakref {
     weakref(weakref&& other) noexcept = default;
     weakref& operator=(weakref&& other) noexcept = default;
 
-    NODISCARD constexpr inline Type* get() const noexcept { return ptr; }
-    NODISCARD constexpr inline Type* operator->() const noexcept { return ptr; }
+    NODISCARD constexpr Type* get() const noexcept { return ptr; }
+    NODISCARD constexpr Type* operator->() const noexcept { return ptr; }
 
 private:
     Type* ptr;
 };
 
 template <typename Type, typename PtrType>
-constexpr inline auto make_weakref(const PtrType& ptr) -> weakref<Type>
+constexpr auto make_weakref(const PtrType& ptr) -> weakref<Type>
 {
     static_assert(std::is_constructible<weakref<Type>, PtrType>(), "Cannot make weakref from this pointer type");
     return weakref<Type>(ptr);

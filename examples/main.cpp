@@ -6,7 +6,6 @@
 #include "quix_render_target.hpp"
 #include "quix_resource.hpp"
 #include "quix_window.hpp"
-#include <vulkan/vulkan_core.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE

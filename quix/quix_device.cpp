@@ -163,8 +163,8 @@ device::find_queue_families(VkPhysicalDevice physical_device)
         }
 
         VkBool32 presentSupport = VK_FALSE;
-        vkGetPhysicalDeviceSurfaceSupportKHR(
-            physical_device, iterator, m_surface, &presentSupport);
+        VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(
+            physical_device, iterator, m_surface, &presentSupport), "failed to check physical device surface support");
         if (presentSupport != 0U) {
             indices.present_family = iterator;
         }
