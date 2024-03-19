@@ -41,14 +41,14 @@ public:
     device(device&&) = delete;
     device& operator=(device&&) = delete;
 
-    NODISCARD inline VkPhysicalDevice get_physical_device() const noexcept { return m_physical_device; }
-    NODISCARD inline VkSurfaceKHR get_surface() const noexcept { return m_surface; }
-    NODISCARD inline VkDevice get_logical_device() const noexcept { return m_logical_device; }
-    NODISCARD inline VmaAllocator get_allocator() const noexcept { return m_allocator; }
-    NODISCARD inline queue_family_indices get_queue_family_indices() const noexcept { return m_queue_family_indices.value(); }
-    NODISCARD inline VkQueue get_graphics_queue() const noexcept { return m_graphics_queue; }
-    NODISCARD inline VkQueue get_present_queue() const noexcept { return m_present_queue; }
-    NODISCARD inline float get_max_sampler_anisotropy() const noexcept { return max_sampler_anisotropy; }
+    NODISCARD VkPhysicalDevice get_physical_device() const noexcept { return m_physical_device; }
+    NODISCARD VkSurfaceKHR get_surface() const noexcept { return m_surface; }
+    NODISCARD VkDevice get_logical_device() const noexcept { return m_logical_device; }
+    NODISCARD VmaAllocator get_allocator() const noexcept { return m_allocator; }
+    NODISCARD queue_family_indices get_queue_family_indices() const noexcept { return m_queue_family_indices.value(); }
+    NODISCARD VkQueue get_graphics_queue() const noexcept { return m_graphics_queue; }
+    NODISCARD VkQueue get_present_queue() const noexcept { return m_present_queue; }
+    NODISCARD float get_max_sampler_anisotropy() const noexcept { return max_sampler_anisotropy; }
 
     NODISCARD VkCommandPool get_command_pool();
     void return_command_pool(VkCommandPool command_pool);
